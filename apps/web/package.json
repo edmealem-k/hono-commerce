@@ -12,9 +12,9 @@
     "@hono-commerce/api": "workspace:*",
     "@hono-commerce/env": "workspace:*",
     "@hono-commerce/ui": "workspace:*",
+    "@hookform/resolvers": "^5.9.1",
     "@polar-sh/better-auth": "catalog:",
     "@swc/helpers": "^0.5.23",
-    "@tanstack/react-form": "^1.33.2",
     "@tanstack/react-query": "^5.101.4",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -27,6 +27,7 @@
     "next-themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "^7.86.0",
     "sonner": "catalog:",
     "zod": "catalog:"
   },

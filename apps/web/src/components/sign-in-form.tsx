@@ -1,13 +1,23 @@
+"use client";
+
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@hono-commerce/ui/components/button";
 import { Input } from "@hono-commerce/ui/components/input";
 import { Label } from "@hono-commerce/ui/components/label";
-import { useForm } from "@tanstack/react-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import z from "zod";
+import { z } from "zod";
 
 import Loader from "./loader";
+
+const signInSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type SignInValues = z.infer<typeof signInSchema>;
 
 export default function SignInForm({
   onSwitchToSignUp,
@@ -17,35 +27,35 @@ export default function SignInForm({
   const router = useRouter();
   const { isPending } = authClient.useSession();
 
-  const form = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInValues>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: "",
     },
-    onSubmit: async ({ value }) => {
-      await authClient.signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onSuccess: () => {
-            router.push("/dashboard");
-            toast.success("Sign in successful");
-          },
-          onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
-          },
-        },
-      );
-    },
-    validators: {
-      onSubmit: z.object({
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
-      }),
-    },
   });
+
+  const onSubmit = async (values: SignInValues) => {
+    await authClient.signIn.email(
+      {
+        email: values.email,
+        password: values.password,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+          toast.success("Sign in successful");
+        },
+        onError: (error) => {
+          toast.error(error.error.message || error.error.statusText);
+        },
+      },
+    );
+  };
 
   if (isPending) {
     return <Loader />;
@@ -55,76 +65,31 @@ export default function SignInForm({
     <div className="mx-auto mt-10 w-full max-w-md p-6">
       <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-        className="space-y-4"
-      >
-        <div>
-          <form.Field name="email">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
-
-        <div>
-          <form.Field name="password">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="password"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
-
-        <form.Subscribe
-          selector={(state) => ({
-            canSubmit: state.canSubmit,
-            isSubmitting: state.isSubmitting,
-          })}
-        >
-          {({ canSubmit, isSubmitting }) => (
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!canSubmit || isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Sign In"}
-            </Button>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-500">{errors.email.message}</p>
           )}
-        </form.Subscribe>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" type="password" {...register("password")} />
+          {errors.password && (
+            <p className="text-xs text-red-500">{errors.password.message}</p>
+          )}
+        </div>
+
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Sign In"}
+        </Button>
       </form>
 
       <div className="mt-4 text-center">
