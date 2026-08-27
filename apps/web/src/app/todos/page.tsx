@@ -1,5 +1,6 @@
 "use client";
 
+import { trpc } from "@/utils/trpc";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Card,
@@ -13,8 +14,6 @@ import { Input } from "@hono-commerce/ui/components/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
-
-import { trpc } from "@/utils/trpc";
 
 type TodoId = number;
 
@@ -68,15 +67,25 @@ export default function TodosPage() {
           <CardDescription>Manage your tasks efficiently</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddTodo} className="mb-6 flex items-center space-x-2">
+          <form
+            onSubmit={handleAddTodo}
+            className="mb-6 flex items-center space-x-2"
+          >
             <Input
               value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
               placeholder="Add a new task..."
               disabled={createMutation.isPending}
             />
-            <Button type="submit" disabled={createMutation.isPending || !newTodoText.trim()}>
-              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+            <Button
+              type="submit"
+              disabled={createMutation.isPending || !newTodoText.trim()}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Add"
+              )}
             </Button>
           </form>
 
@@ -96,12 +105,14 @@ export default function TodosPage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       checked={todo.completed}
-                      onCheckedChange={() => handleToggleTodo(todo.id, todo.completed)}
+                      onCheckedChange={() =>
+                        handleToggleTodo(todo.id, todo.completed)
+                      }
                       id={`todo-${todo.id}`}
                     />
                     <label
                       htmlFor={`todo-${todo.id}`}
-                      className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}
+                      className={`${todo.completed ? "text-muted-foreground line-through" : ""}`}
                     >
                       {todo.text}
                     </label>

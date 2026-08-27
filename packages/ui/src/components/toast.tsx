@@ -1,10 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
-
-import { cn } from "@hono-commerce/ui/lib/utils";
 import { Button } from "@hono-commerce/ui/components/button";
+import { cn } from "@hono-commerce/ui/lib/utils";
 import {
   XIcon,
   CircleCheckIcon,
@@ -13,6 +11,7 @@ import {
   OctagonXIcon,
   Loader2Icon,
 } from "lucide-react";
+import * as React from "react";
 
 const toast = ToastPrimitive.createToastManager();
 
@@ -87,7 +86,10 @@ function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
   );
 }
 
-function ToastDescription({ className, ...props }: ToastPrimitive.Description.Props) {
+function ToastDescription({
+  className,
+  ...props
+}: ToastPrimitive.Description.Props) {
   return (
     <ToastPrimitive.Description
       data-slot="toast-description"
@@ -189,7 +191,11 @@ function ToastList() {
   ));
 }
 
-function Toaster({ children, toastManager = toast, ...props }: ToastPrimitive.Provider.Props) {
+function Toaster({
+  children,
+  toastManager = toast,
+  ...props
+}: ToastPrimitive.Provider.Props) {
   return (
     <ToastProvider toastManager={toastManager} {...props}>
       {children}

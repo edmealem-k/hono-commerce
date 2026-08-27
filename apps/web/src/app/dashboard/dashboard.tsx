@@ -1,9 +1,8 @@
 "use client";
-import { Button } from "@hono-commerce/ui/components/button";
-import { useQuery } from "@tanstack/react-query";
-
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
+import { Button } from "@hono-commerce/ui/components/button";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard({
   customerState,
@@ -13,8 +12,11 @@ export default function Dashboard({
   session: typeof authClient.$Infer.Session;
 }) {
   const privateData = useQuery(trpc.privateData.queryOptions());
+  console.log("customerState", customerState);
+  console.log("session", session);
 
-  const hasProSubscription = (customerState?.activeSubscriptions?.length ?? 0) > 0;
+  const hasProSubscription =
+    (customerState?.activeSubscriptions?.length ?? 0) > 0;
 
   return (
     <>
@@ -25,7 +27,9 @@ export default function Dashboard({
           Manage Subscription
         </Button>
       ) : (
-        <Button onClick={async () => await authClient.checkout({ slug: "pro" })}>
+        <Button
+          onClick={async () => await authClient.checkout({ slug: "pro" })}
+        >
           Upgrade to Pro
         </Button>
       )}

@@ -1,16 +1,15 @@
 "use client";
 
-import * as React from "react";
+import { Button } from "@hono-commerce/ui/components/button";
+import { cn } from "@hono-commerce/ui/lib/utils";
 import {
   MessageScroller as MessageScrollerPrimitive,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
 } from "@shadcn/react/message-scroller";
-
-import { cn } from "@hono-commerce/ui/lib/utils";
-import { Button } from "@hono-commerce/ui/components/button";
 import { ArrowDownIcon } from "lucide-react";
+import * as React from "react";
 
 function MessageScrollerProvider(
   props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>,

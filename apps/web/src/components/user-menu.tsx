@@ -1,3 +1,4 @@
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   DropdownMenu,
@@ -11,8 +12,6 @@ import {
 import { Skeleton } from "@hono-commerce/ui/components/skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-import { authClient } from "@/lib/auth-client";
 
 export default function UserMenu() {
   const router = useRouter();

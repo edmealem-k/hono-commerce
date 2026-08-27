@@ -1,3 +1,26 @@
 {
-  "ignorePatterns": []
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [".agents"],
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "printWidth": 80,
+  "sortImports": {
+    "order": "asc",
+    "ignoreCase": true,
+    "newlinesBetween": true,
+    "internalPattern": ["@/*", "~/*", "@hono-commerce/*"],
+    "groups": [
+      "builtin",
+      "external",
+      "internal",
+      ["parent", "sibling", "index"],
+      "style",
+      "type",
+      "unknown"
+    ]
+  },
+  "sortTailwindcss": true,
+  "sortPackageJson": true
 }
