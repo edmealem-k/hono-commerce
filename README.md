@@ -78,7 +78,7 @@ If you want to add app-specific blocks instead of shared primitives, run the sha
 
 ### Docker Compose
 
-- Target: server
+- Target: web + server
 - Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
 - Build images: bun run docker:build
 - Start: bun run docker:up

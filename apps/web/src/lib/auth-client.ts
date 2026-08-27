@@ -1,5 +1,4 @@
 import { env } from "@hono-commerce/env/web";
-import { polarClient } from "@polar-sh/better-auth/client";
 import { createAuthClient } from "better-auth/react";
 
 function getServerUrl(url: string) {
@@ -44,5 +43,4 @@ export const authClient = createAuthClient({
     "/api/auth",
     getServerUrl(env.NEXT_PUBLIC_SERVER_URL),
   ).toString(),
-  plugins: [polarClient()],
 });

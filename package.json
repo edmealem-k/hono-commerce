@@ -20,7 +20,6 @@
       "react-dom": "^19.2.8",
       "sonner": "^2.0.7",
       "@trpc/client": "^11.18.0",
-      "@polar-sh/better-auth": "^1.8.4",
       "@tailwindcss/postcss": "^4.3.3",
       "@types/react": "^19.2.17",
       "@types/react-dom": "^19.2.3",

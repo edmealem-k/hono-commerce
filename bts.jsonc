@@ -8,9 +8,9 @@
 
 {
   "$schema": "https://r2.better-t-stack.dev/schema.json",
-  "version": "3.40.5",
-  "createdAt": "2026-08-27T20:36:14.379Z",
-  "reproducibleCommand": "bun create better-t-stack@latest hono-commerce --frontend next --backend hono --runtime bun --database postgres --orm drizzle --api trpc --auth better-auth --payments polar --addons husky oxlint skills turborepo --examples todo --db-setup none --web-deploy none --server-deploy docker --git --package-manager bun --install",
+  "version": "3.41.3",
+  "createdAt": "2026-08-27T23:35:59.604Z",
+  "reproducibleCommand": "bun create better-t-stack@latest hono-commerce --frontend next --backend hono --runtime bun --database postgres --orm drizzle --api trpc --auth better-auth --payments none --addons husky oxlint skills turborepo --examples todo --db-setup none --web-deploy docker --server-deploy docker --no-git --package-manager bun --no-install",
   "database": "postgres",
   "orm": "drizzle",
   "backend": "hono",
@@ -19,10 +19,10 @@
   "addons": ["husky", "oxlint", "skills", "turborepo"],
   "examples": ["todo"],
   "auth": "better-auth",
-  "payments": "polar",
+  "payments": "none",
   "packageManager": "bun",
   "dbSetup": "none",
   "api": "trpc",
-  "webDeploy": "none",
+  "webDeploy": "docker",
   "serverDeploy": "docker",
 }
