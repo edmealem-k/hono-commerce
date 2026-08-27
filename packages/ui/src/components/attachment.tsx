@@ -1,9 +1,10 @@
+import * as React from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { Button } from "@hono-commerce/ui/components/button";
-import { cn } from "@hono-commerce/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+
+import { cn } from "@hono-commerce/ui/lib/utils";
+import { Button } from "@hono-commerce/ui/components/button";
 
 const attachmentVariants = cva(
   "group/attachment relative flex w-fit max-w-full min-w-0 shrink-0 flex-wrap rounded-none border bg-card text-card-foreground transition-colors focus-within:ring-1 focus-within:ring-ring/50 has-[>a,>button]:hover:bg-muted/50 data-[state=error]:border-destructive/30 data-[state=idle]:border-dashed",
@@ -33,14 +34,12 @@ function Attachment({
   VariantProps<typeof attachmentVariants> & {
     state?: "idle" | "uploading" | "processing" | "error" | "done";
   }) {
-  const resolvedOrientation = orientation ?? "horizontal";
-
   return (
     <div
       data-slot="attachment"
       data-state={state}
       data-size={size}
-      data-orientation={resolvedOrientation}
+      data-orientation={orientation}
       className={cn(attachmentVariants({ size, orientation }), className)}
       {...props}
     />
@@ -135,13 +134,11 @@ function AttachmentAction({
   className,
   variant,
   size = "icon-xs",
-  type = "button",
   ...props
 }: React.ComponentProps<typeof Button>) {
   return (
     <Button
       data-slot="attachment-action"
-      type={type}
       variant={variant ?? "ghost"}
       size={size}
       className={cn(className)}
