@@ -23,7 +23,7 @@ export default function Home() {
   const healthCheck = useQuery({
     queryKey: ["health"],
     queryFn: async () => {
-      const res = await apiClient.api.health.$get();
+      const res = await apiClient.api.v1.health.$get();
       if (!res.ok) {
         throw new Error("Health check failed");
       }
