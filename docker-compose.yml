@@ -1,23 +1,23 @@
 name: hono-commerce
 
 services:
-  web:
+  storefront:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/storefront/Dockerfile
       args:
         NEXT_PUBLIC_SERVER_URL: http://localhost:3000
     init: true
     ports:
       - "3001:3001"
     env_file:
-      - path: apps/web/.env
+      - path: apps/storefront/.env
         required: false
     environment:
-      SERVER_URL: http://server:3000
-      NEXT_PUBLIC_SERVER_URL: http://server:3000
+      SERVER_URL: http://api:3000
+      NEXT_PUBLIC_SERVER_URL: http://api:3000
     depends_on:
-      server:
+      api:
         condition: service_healthy
     healthcheck:
       test:
@@ -33,18 +33,50 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  server:
+  dashboard:
     build:
       context: .
-      dockerfile: apps/server/Dockerfile
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+    init: true
+    ports:
+      - "3002:3002"
+    env_file:
+      - path: apps/dashboard/.env
+        required: false
+    environment:
+      SERVER_URL: http://api:3000
+      NEXT_PUBLIC_SERVER_URL: http://api:3000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3002/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     init: true
     ports:
       - "3000:3000"
     env_file:
-      - path: apps/server/.env
+      - path: apps/api/.env
         required: false
     environment:
-      CORS_ORIGIN: http://localhost:3001
+      CORS_ORIGIN: http://localhost:3001,http://localhost:3002
     healthcheck:
       test:
         [

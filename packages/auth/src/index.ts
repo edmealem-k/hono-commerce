@@ -1,6 +1,6 @@
 import { createDb } from "@hono-commerce/db";
 import * as schema from "@hono-commerce/db/schema/auth";
-import { env } from "@hono-commerce/env/server";
+import { env } from "@hono-commerce/env/api";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
@@ -13,7 +13,7 @@ export function createAuth() {
 
       schema: schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: env.CORS_ORIGIN.split(",").map((o) => o.trim()),
     emailAndPassword: {
       enabled: true,
     },
