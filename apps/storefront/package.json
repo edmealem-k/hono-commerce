@@ -1,0 +1,41 @@
+{
+  "name": "storefront",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "check-types": "tsc --noEmit",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@hono-commerce/env": "workspace:*",
+    "@hono-commerce/ui": "workspace:*",
+    "@hookform/resolvers": "^5.9.1",
+    "@swc/helpers": "^0.5.23",
+    "@tanstack/react-query": "catalog:",
+    "api": "workspace:*",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "hono": "catalog:",
+    "lucide-react": "catalog:",
+    "next": "^16.3.0",
+    "next-themes": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-hook-form": "^7.86.0",
+    "sonner": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hono-commerce/config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:",
+    "@tanstack/react-query-devtools": "catalog:",
+    "@types/node": "^26.2.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

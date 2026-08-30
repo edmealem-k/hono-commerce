@@ -2,7 +2,7 @@
 
 **Document Version**: 1.0.0  
 **Status**: Approved Architecture Blueprint  
-**Target Stack**: Next.js 16 (App Router), Hono, Bun, TypeScript, PostgreSQL (Drizzle ORM), Better Auth, Stripe Connect & Billing, Socket.io (Redis Adapter), RabbitMQ (Topic Exchanges & Dead-Letter Exchanges).
+**Target Stack**: Next.js 16 (App Router), Hono, Bun, TypeScript, PostgreSQL (Drizzle ORM), Better Auth, Stripe Connect & Billing, Socket.io (Redis Adapter), BullMQ (Redis Queues, Delayed Jobs, Crons, Bull-Board UI).
 
 ---
 
@@ -14,15 +14,15 @@
 
 - **Multi-Tenant Subdomain & Custom Domain Routing**: Independent branded storefronts at `[slug].shop.com` and custom CNAME domains (`store.example.com`).
 - **Multi-Tiered Portals**:
-  - **Public Storefront (`apps/web`)**: Discovery, product catalog, variant selection, cart, checkout, reviews, and customer-to-vendor live chat.
+  - **Public Storefront (`apps/storefront`)**: Discovery, product catalog, variant selection, cart, checkout, reviews, and customer-to-vendor live chat.
   - **Tenant Management Portal (`apps/dashboard/(tenant)`)**: Catalog & inventory management, order processing, customer support, team chat, dynamic RBAC configuration, Stripe Connect payouts.
   - **System Admin Portal (`apps/dashboard/(admin)`)**: Platform-wide tenant moderation, platform fee controls, superadmin RBAC, system-to-tenant support escalation.
 - **Granular Dynamic RBAC**: Extensible $4+$ segment permission keys (`NAMESPACE:MODULE:RESOURCE:ACTION`) with role group templates and member-specific overrides.
 - **Unified Payment Processing (100% Stripe)**:
   - **Stripe Connect**: Automated tenant KYC onboarding, split payments, and direct/destination payouts with custom platform commissions.
   - **Stripe Billing**: Tiered recurring subscriptions for tenants paying the platform (Free, Pro, Enterprise).
-- **Real-Time Communication**: Multi-channel Socket.io server with Redis Pub/Sub clustering and RabbitMQ-backed offline email notification debouncers.
-- **Asynchronous Event-Driven Pipeline**: High-throughput RabbitMQ message bus with Topic Exchanges and Dead-Letter Exchanges (DLX) powering background worker consumers.
+- **Real-Time Communication**: Multi-channel Socket.io server with Redis Pub/Sub clustering and debounced offline email notifications.
+- **Asynchronous Event-Driven Pipeline**: High-performance BullMQ message bus powered by Redis with automated exponential backoff retries, delayed lifecycle jobs, recurring crons, and Bull-Board observability, encapsulated behind a pluggable `packages/queue` abstraction layer.
 
 ---
 
@@ -31,25 +31,25 @@
 ```
 hono-commerce/
 ├── apps/
-│   ├── web/                     # Public Storefront & Customer Portal (Next.js 16)
+│   ├── storefront/              # Public Storefront & Customer Portal (Next.js 16)
 │   │                            # - Multi-tenant routing: [slug].shop.com & custom domains
 │   │                            # - Product discovery, Cart, Checkout, Reviews, Support Chat
 │   ├── dashboard/               # Unified Management Portal (Next.js 16)
 │   │                            # - /(tenant) Store, Order & Team Management, Internal Chat
-│   │                            # - /(admin) Platform Superadmin, Moderation, System Chat
-│   ├── server/                  # Core Backend API (Hono + Bun)
+│   │                            # - /(admin) Platform Superadmin, Moderation, Bull-Board, System Chat
+│   ├── api/                     # Core Backend API (Hono + Bun)
 │   │                            # - Hono REST & Typed RPC (hc), Webhooks (Stripe Inbound), Auth handlers
-│   ├── messaging-server/        # Dedicated WebSocket Server (Socket.io + Redis Adapter)
+│   ├── realtime/                # Dedicated WebSocket Server (Socket.io + Redis Adapter)
 │   │                            # - Customer Support, Tenant Team, and System Admin rooms
-│   └── job-worker/              # Async Event Consumer (amqplib + RabbitMQ)
-│                                # - Order fulfillment, emails, webhooks, inventory sync
+│   └── worker/                  # Background Job Consumer (BullMQ + Redis)
+│                                # - Order fulfillment, emails, webhooks, inventory locks, crons
 │
 ├── packages/
 │   ├── auth/                    # Better Auth (Organization plugin + custom RBAC permissions)
 │   ├── db/                      # PostgreSQL + Drizzle ORM schemas and migration scripts
 │   ├── ui/                      # Shared UI component library (shadcn/ui + Tailwind v4)
 │   ├── notification/            # Email templates (React Email / Nodemailer), push notifications
-│   ├── queue/                   # RabbitMQ connection manager, exchange definitions, publishers
+│   ├── queue/                   # Pluggable Queue Manager, BullMQ definitions, typed event publishers
 │   ├── types/                   # Shared Zod schemas, DTOs, permission catalog & domain types
 │   ├── config/                  # Shared TypeScript, ESLint & Tailwind configs
 │   └── env/                     # Type-safe environment variable schema validation
@@ -262,7 +262,7 @@ graph TD
         Admin[System Admin]
     end
 
-    subgraph SocketCluster ["Socket.io Server (apps/messaging-server)"]
+    subgraph SocketCluster ["Socket.io Server (apps/realtime)"]
         subgraph Rooms ["Namespaces & Dynamic Rooms"]
             R_Support["tenant:{tenantId}:support:{customerId}"]
             R_Team["tenant:{tenantId}:team"]
@@ -290,63 +290,99 @@ graph TD
 ### The 3 Chat Channels:
 
 1. **`customer_support`** (`tenant:{tenantId}:support:{customerId}`): Customer-to-store inquiries. Restricted to the customer and tenant staff with `WORKSPACE:COMMUNICATION:SUPPORT_CHAT:RESPOND`.
-2. **`tenant_team`** (`tenant:{tenantId}:team`): Internal team collaboration room for store staff.
-3. **`system_support`** (`system:support:{tenantId}`): Dedicated channel between Tenant Owners and System Superadmins for platform assistance.
+
+- `customer_support` (`tenant:{tenantId}:support:{customerId}`): Customer-to-store inquiries. Restricted to the customer and tenant staff with `WORKSPACE:COMMUNICATION:SUPPORT_CHAT:RESPOND`.
+- `tenant_team` (`tenant:{tenantId}:team`): Internal team collaboration room for store staff.
+- `system_support` (`system:support:{tenantId}`): Dedicated channel between Tenant Owners and System Superadmins for platform assistance.
 
 ---
 
-## 8. Event-Driven Architecture & RabbitMQ Pipeline
+### 8. Asynchronous Event Processing & Queuing Architecture (BullMQ)
+
+`hono-commerce` utilizes **BullMQ** on top of our existing **Redis** infrastructure for unified instant event queues, delayed lifecycle jobs, and recurring cron schedules.
 
 ```mermaid
 graph TD
-    subgraph Producers ["Producers (Hono API & Sockets)"]
-        API_Orders["Order Mutations"]
+    subgraph Producers ["Producers (API, Storefront, Realtime)"]
+        API_Orders["Order Created / Paid"]
         API_Webhooks["Inbound Stripe Webhooks"]
-        Socket_Chat["Offline Chat Messages"]
+        API_Checkout["Checkout Started"]
+        Socket_Chat["Unread Chat Messages"]
     end
 
-    subgraph RabbitMQ ["RabbitMQ Topic Exchanges"]
-        ExCommerce["commerce.events"]
-        ExNotifications["notifications.events"]
-        ExWebhooks["webhooks.events"]
-        ExDLX["dead_letter.exchange"]
+    subgraph QueuePackage ["packages/queue (Typed Producer Layer)"]
+        P_Orders["publishOrderCreated()"]
+        P_Webhooks["publishStripeWebhook()"]
+        P_Locks["scheduleInventoryLockRelease()"]
+        P_CartDrip["scheduleAbandonedCartReminder()"]
+        P_ChatDigest["scheduleChatDigest()"]
     end
 
-    subgraph Queues ["Durable Queues"]
-        Q_Orders["orders.process.queue"]
-        Q_Emails["email.dispatch.queue"]
-        Q_Stripe["webhooks.stripe.inbound.queue"]
-        Q_TenantWebhooks["webhooks.tenant.outbound.queue"]
-        Q_DLQ["failed_jobs.dlq"]
+    subgraph BullMQ ["BullMQ Queues (Redis-Backed)"]
+        Q_Orders["queue:orders (Instant)"]
+        Q_WebhooksIn["queue:stripe-webhooks (Instant)"]
+        Q_WebhooksOut["queue:tenant-webhooks (Instant)"]
+        Q_Emails["queue:emails (Instant)"]
+        Q_Locks["queue:inventory-locks (15m Delay)"]
+        Q_CartDrip["queue:abandoned-cart (2h Delay)"]
+        Q_ChatDigest["queue:chat-digest (5m Delay)"]
+        Q_Reconcile["queue:cron-payouts (Daily @ 00:00)"]
+        Q_Rollup["queue:cron-analytics (Hourly)"]
     end
 
-    subgraph Consumers ["apps/job-worker Consumers"]
-        W_Orders["Order Processing Consumer"]
+    subgraph Worker ["apps/worker (Processors)"]
+        W_Orders["Order Processor"]
+        W_Webhooks["Stripe Webhook Processor"]
         W_Emails["Email Dispatcher (Nodemailer/Resend)"]
-        W_Stripe["Stripe Inbound Webhook Consumer"]
         W_Outbound["Tenant Webhook HTTP Dispatcher"]
+        W_Locks["Inventory Lock Releaser"]
+        W_Cart["Abandoned Cart Dispatcher"]
+        W_Crons["Cron Job Runner"]
     end
 
-    API_Orders -->|orders.created| ExCommerce
-    Socket_Chat -->|chat.offline_message| ExNotifications
-    API_Webhooks -->|stripe.event| ExWebhooks
+    API_Orders --> P_Orders --> Q_Orders --> W_Orders
+    API_Webhooks --> P_Webhooks --> Q_WebhooksIn --> W_Webhooks
+    API_Checkout --> P_Locks --> Q_Locks --> W_Locks
+    API_Checkout --> P_CartDrip --> Q_CartDrip --> W_Cart
+    Socket_Chat --> P_ChatDigest --> Q_ChatDigest --> W_Emails
 
-    ExCommerce --> Q_Orders --> W_Orders
-    ExNotifications --> Q_Emails --> W_Emails
-    ExWebhooks --> Q_Stripe --> W_Stripe
-    ExWebhooks --> Q_TenantWebhooks --> W_Outbound
-
-    Q_Orders -.->|On Max Retries| ExDLX --> Q_DLQ
-    Q_Emails -.->|On Max Retries| ExDLX --> Q_DLQ
-    Q_Stripe -.->|On Max Retries| ExDLX --> Q_DLQ
+    Q_WebhooksOut --> W_Outbound
+    Q_Emails --> W_Emails
+    Q_Reconcile --> W_Crons
+    Q_Rollup --> W_Crons
 ```
 
-### Routing Keys & Message Contracts:
+---
 
-- `commerce.order.created`: `{ orderId: string, tenantId: string, customerId: string }`
-- `notifications.email.send`: `{ to: string, template: string, data: Record<string, unknown> }`
-- `webhooks.stripe.inbound`: `{ eventId: string, type: string, payload: unknown }`
-- `webhooks.tenant.dispatch`: `{ tenantId: string, event: string, payload: unknown, targetUrl: string }`
+### A. Queue Definitions & Job Contracts
+
+| Queue Name        | Job Type             | Trigger & Delay                             | Purpose & Action                                                             |
+| :---------------- | :------------------- | :------------------------------------------ | :--------------------------------------------------------------------------- |
+| `orders`          | Instant              | On customer checkout completion             | Deducts persistent stock, sets status to `PAID`, triggers invoice email.     |
+| `stripe-webhooks` | Instant              | On Stripe HTTP webhook hit ($<20\text{ms}$) | Idempotently processes `checkout.session.completed`, `account.updated`.      |
+| `tenant-webhooks` | Instant              | On order state transition                   | Dispatches signed HMAC webhooks to external tenant endpoints.                |
+| `emails`          | Instant              | On transactional event                      | Dispatches React Email / Nodemailer messages.                                |
+| `inventory-locks` | **Delayed (15m)**    | On checkout initialization                  | Releases reserved variant stock if order is not completed within 15 minutes. |
+| `abandoned-cart`  | **Delayed (2h)**     | On cart idle                                | Dispatches email drip reminder with cart restore link.                       |
+| `chat-digest`     | **Delayed (5m)**     | On unread chat message                      | Debounces email notifications for offline customers/staff.                   |
+| `cron-payouts`    | *_Cron (0 0 * * *)*_ | Nightly at midnight UTC                     | Reconciles Stripe Connect split transfers and platform commissions.          |
+| `cron-analytics`  | *_Cron (0 * * * *)*_ | Hourly                                      | Aggregates tenant GMV, order volume, and active customer counts.             |
+
+---
+
+### B. Decoupled Architecture & Polyglot Future-Proofing
+
+To ensure architectural scalability and make future integrations (e.g. Go backend microservices or RabbitMQ AMQP routing) frictionless, the system adheres to strict decoupling rules:
+
+1. **Zero Direct BullMQ Imports in Business Logic**:
+   - `apps/api`, `apps/storefront`, and `apps/dashboard` **never import BullMQ directly**.
+   - All producers are imported exclusively from `@hono-commerce/queue` (`packages/queue/src/publishers/*`).
+2. **Pluggable Driver Pattern**:
+   - If a high-performance **Golang** service is introduced in the future:
+     - **Option 1 (Redis Streams / Shared Redis)**: The Go service can consume directly from Redis without changes to the infrastructure.
+     - **Option 2 (AMQP / RabbitMQ Bridge)**: Modify `packages/queue` to broadcast events to RabbitMQ without touching any API route handlers.
+3. **Built-in Visual Monitoring (`@bull-board`)**:
+   - The Bull-Board UI is mounted securely in `apps/dashboard/(admin)` to inspect job throughput, latency, failed jobs, and trigger manual retries.
 
 ---
 
@@ -617,11 +653,11 @@ export const chatMessage = pgTable(
 
 ## 10. Implementation Phases & Milestones
 
-| Phase                                | Core Objective              | Key Deliverables                                                                                                                                    |
-| :----------------------------------- | :-------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Phase 1: Foundation & DB Schemas** | Database & Shared Packages  | Drizzle schema migrations (`tenants`, `rbac`, `products`, `orders`, `chat`), `packages/types` permission registry, `packages/queue` RabbitMQ setup. |
-| **Phase 2: Multi-Tenant Storefront** | Subdomain & Cart Experience | Next.js middleware subdomain resolver, product catalog, variant selectors, cart, Stripe Connect destination checkout.                               |
-| **Phase 3: RBAC & Dashboard**        | Tenant & Admin Portals      | `apps/dashboard` with `/(tenant)` and `/(admin)` route groups, Role Group builder UI, Hono permission middleware.                                   |
-| **Phase 4: RabbitMQ & Workers**      | Async Processing Pipeline   | `apps/job-worker`, Stripe inbound webhook consumer, transactional email dispatcher (Nodemailer), outbound tenant webhooks.                          |
-| **Phase 5: Real-Time Chat**          | Live Communication Engine   | `apps/messaging-server` (Socket.io + Redis Pub/Sub), Customer Support widget, Tenant Team room, Admin escalation channel.                           |
-| **Phase 6: Reviews & Moderation**    | Feedback & Quality Control  | Verified buyer review submission, tenant owner response UI, admin review moderation.                                                                |
+| Phase                                 | Core Objective              | Key Deliverables                                                                                                                                  |
+| :------------------------------------ | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 1: Foundation & DB Schemas**  | Database & Shared Packages  | Drizzle schema migrations (`tenants`, `rbac`, `products`, `orders`, `chat`), `packages/types` permission registry, `packages/queue` BullMQ setup. |
+| **Phase 2: Multi-Tenant Storefront**  | Subdomain & Cart Experience | Next.js middleware subdomain resolver, product catalog, variant selectors, cart, Stripe Connect destination checkout.                             |
+| **Phase 3: RBAC & Dashboard**         | Tenant & Admin Portals      | `apps/dashboard` with `/(tenant)` and `/(admin)` route groups, Role Group builder UI, Hono permission middleware.                                 |
+| **Phase 4: BullMQ & Background Jobs** | Async Processing Pipeline   | `apps/worker`, BullMQ processors, Stripe webhook consumer, transactional emails, delayed cart recovery, Bull-Board admin UI.                      |
+| **Phase 5: Real-Time Chat**           | Live Communication Engine   | `apps/realtime` (Socket.io + Redis Pub/Sub), Customer Support widget, Tenant Team room, Admin escalation channel.                                 |
+| **Phase 6: Reviews & Moderation**     | Feedback & Quality Control  | Verified buyer review submission, tenant owner response UI, admin review moderation.                                                              |

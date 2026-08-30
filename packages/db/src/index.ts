@@ -1,4 +1,4 @@
-import { env } from "@hono-commerce/env/server";
+import { env } from "@hono-commerce/env/api";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 import * as schema from "./schema";

@@ -7,18 +7,18 @@ This document contains mandatory architectural, database, backend API, and event
 ## 1. Monorepo Structure & Package Boundaries
 
 - **`apps/`**:
-  - `apps/web`: Public storefront & customer portal (Next.js 16 App Router).
+  - `apps/storefront`: Public storefront & customer portal (Next.js 16 App Router).
   - `apps/dashboard`: Store management (`/(tenant)`) and superadmin (`/(admin)`) portals (Next.js 16).
-  - `apps/server`: Core backend API server (Hono on Bun).
-  - `apps/messaging-server`: Dedicated real-time WebSocket server (Socket.io + Redis Pub/Sub).
-  - `apps/job-worker`: Background event consumer (RabbitMQ + amqplib).
+  - `apps/api`: Core backend API server (Hono on Bun).
+  - `apps/realtime`: Dedicated real-time WebSocket server (Socket.io + Redis Pub/Sub).
+  - `apps/worker`: Background job consumer (BullMQ + Redis).
 - **`packages/`**:
   - `packages/db`: PostgreSQL schemas (Drizzle ORM) and migration scripts.
   - `packages/auth`: Better Auth configuration with Drizzle PostgreSQL adapter.
   - `packages/ui`: Shared Shadcn / Base UI component library.
   - `packages/env`: Type-safe environment variable validation (`@t3-oss/env-*`).
   - `packages/types`: Shared Zod schemas, DTOs, and domain types.
-  - `packages/queue`: RabbitMQ connection manager, exchange definitions, and event publishers.
+  - `packages/queue`: Pluggable Queue Manager, BullMQ definitions, and typed event publishers.
   - `packages/notification`: Email templates (React Email / Nodemailer) and notification handlers.
   - `packages/config`: Shared configurations for TypeScript, ESLint, Oxlint, and Tailwind CSS.
 
@@ -68,17 +68,25 @@ This document contains mandatory architectural, database, backend API, and event
 
 ---
 
-## 4. Asynchronous Events & Queuing (`packages/queue` & `apps/job-worker`)
+## 4. Asynchronous Events & Queuing Architecture (`packages/queue` & `apps/worker`)
 
-- **RabbitMQ Topic Exchanges**:
-  - `commerce.events` (order creation, inventory reservations, fulfillment updates).
-  - `notifications.events` (transactional emails, push notifications, offline chat digests).
-  - `webhooks.events` (inbound Stripe webhooks, outbound tenant webhooks).
-  - `dead_letter.exchange` (DLX for failed message processing and retries).
+- **Unified Redis Message Bus (BullMQ)**:
+  - **Instant Queues**: `orders` (fulfillment state machine), `stripe-webhooks` (idempotent Stripe ingest), `tenant-webhooks` (HMAC outbound delivery), `emails` (React Email / Nodemailer).
+  - **Delayed Queues**:
+    - `inventory-locks` (15m delay: checkout cart expiry).
+    - `abandoned-cart` (2h delay: recovery email drip).
+    - `chat-digest` (5m delay: debounced offline unread chat summary).
+  - **Recurring Crons**:
+    - `cron-payouts` (Nightly @ 00:00 UTC: Stripe Connect split reconciliation).
+    - `cron-analytics` (Hourly: tenant GMV & metric rollups).
+  - **Visual Monitoring**: Bull-Board dashboard mounted in `apps/dashboard/(admin)`.
+- **Strict Decoupling Invariant**:
+  - Application routes (`apps/api`, `apps/storefront`, `apps/dashboard`) MUST NEVER import BullMQ directly.
+  - All event publishing MUST go through typed functions exported by `@hono-commerce/queue` (`packages/queue/src/publishers/*`) to allow pluggable future expansion (e.g. Golang microservices or RabbitMQ bridges).
 - **Consumer Idempotency**:
-  - All background workers must use idempotency keys (e.g. Stripe `event.id` or `order.id`) to prevent duplicate processing.
+  - All background workers must use idempotency keys (e.g. `jobId: stripeEvent.id` or `order.id`) to prevent duplicate processing.
 - **Fast Webhook Response**:
-  - Inbound webhook handlers (e.g. Stripe) must immediately enqueue the raw event to RabbitMQ and respond with `200 OK` in $<20\text{ms}$.
+  - Inbound webhook handlers (e.g. Stripe) must immediately enqueue raw events to BullMQ and respond with `200 OK` in $<20\text{ms}$.
 
 ---
 
