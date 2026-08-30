@@ -15,7 +15,7 @@ This document contains mandatory rules for frontend development, component compo
 
 ## 1. UI & Component Architecture (Base UI + Shadcn)
 
-- **Component Source**: Always import components from `@hono-commerce/ui/components/...`. Do not write local one-off duplicates in `apps/storefront/src/components/ui`. If a needed component is missing, add it to `packages/ui` first.
+- **Component Source**: Always import atomic primitives from `@hono-commerce/ui/components/...` and composite systems from `@hono-commerce/ui/shared/...`. Do not write local one-off duplicates in `apps/storefront/src/components/ui`. If a needed component is missing, add it to `packages/ui` first.
 - **Base UI Primitives (Not Radix `asChild`)**: This workspace uses `@base-ui/react`. When a component supports composition (e.g. `<DropdownMenuTrigger render={<Button ... />} />`), use the `render` prop. Do not assume Radix `asChild`.
 - **Zero Raw HTML Inputs/Buttons Policy**:
   - `<Button>` instead of `<button>`
@@ -33,9 +33,28 @@ This document contains mandatory rules for frontend development, component compo
   - `<Sonner>` (`toast.success()`, `toast.error()`) instead of `alert()` / `confirm()`
 - In `apps/storefront`, do not use `Button href={...}` or manually style `Link` to look like a button for CTA/navigation actions. Use `<Link href="/..."><Button>...</Button></Link>` or Base UI `render={<Button ... />}` composition.
 
+### Composite Shared UI Modules (`@hono-commerce/ui/shared/*`)
+
+- **S3 Media & Previews**: `@hono-commerce/ui/shared/file/file-preview-drawer` (`FilePreviewDrawer`, `FilePreviewButton`, `MimeIcon`)
+- **Tables & Filters**: `@hono-commerce/ui/shared/data-table/*` (`DataTablePagination`, `DataTableColumnHeader`, `DataTableViewOptions`, `CommerceFilters`, `EmptyState`)
+- **Global Drawers & Modals**: `@hono-commerce/ui/shared/drawer/global-drawer` (`useDrawer`, `GlobalDrawer`), `@hono-commerce/ui/shared/modal/*` (`useModal`, `GlobalModal`, `ConfirmDialog`)
+- **Resizable Split View**: `@hono-commerce/ui/shared/split-view/global-split-view` (`useSplitView`, `GlobalSplitView`)
+- **Dashboard Heroes & Metrics**: `@hono-commerce/ui/shared/dashboard/*` (`WorkspaceHeroLayout`, `MetricTile`, `StatusPill`, `QueueCard`)
+- **Layout & Multi-Tenant**: `@hono-commerce/ui/shared/layout/*` (`ResponsiveContentSidebarLayout`, `TenantSwitcher`)
+- **Tabs & Scrolling**: `@hono-commerce/ui/shared/tabs/commerce-tabs` (`CommerceTabs`, `useDragScroll`)
+- **Forms & Timeline**: `@hono-commerce/ui/shared/forms/onboarding-timeline` (`OnboardingTimeline`, `StepCard`)
+
 ---
 
-## 2. Forms & Validation
+## 2. Customer Portal & Storefront Navigation
+
+- **Public Catalog**: Browsing products, categories, search, filtering, and customer reviews.
+- **Cart & Checkout**: Instant BullMQ order locks, Stripe Elements, and guest/customer checkout flows.
+- **Customer Portal**: Order history tracking, invoice downloads, and live tenant support chat.
+
+---
+
+## 3. Forms & Validation
 
 - **Base UI `Field` Composition**: Use Base UI form primitives from `@hono-commerce/ui/components/field` (`Field`, `FieldGroup`, `FieldSet`, `FieldLegend`, `FieldLabel`, `FieldDescription`, `FieldError`).
 - Build forms using: `FieldGroup` + `Field` + control (`Input`, `Select`, `Textarea`, etc.) + `FieldLabel` / `FieldDescription` / `FieldError`.
@@ -49,14 +68,14 @@ This document contains mandatory rules for frontend development, component compo
 
 ---
 
-## 3. Menus, Modals & Navigation
+## 4. Menus, Modals & Navigation
 
 - **No Raw HTML `<details>`/`<summary>`**: Do not use raw HTML `details`/`summary` for dropdowns, app navigation, or accordions.
 - **Shadcn Navigation Primitives**: Always use `DropdownMenu`, `NavigationMenu`, `Accordion`, `Collapsible`, `Popover`, `Sheet`, or `Drawer` so keyboard behavior (`Tab`, `Escape`, arrow keys), layering (z-index), and screen-reader accessibility remain consistent.
 
 ---
 
-## 4. Client Data Fetching (Hono Native RPC + TanStack Query)
+## 5. Client Data Fetching (Hono Native RPC + TanStack Query)
 
 - **Frontend RPC Client**: Always use `apiClient` from `@/lib/api-client` (`hc<AppType>`). Never make un-typed ad-hoc `fetch("/api/...")` requests.
 - **Client-Side Queries & Mutations**: Wrap API calls in TanStack Query (`useQuery`, `useMutation`) using `getQueryClient()` from `@/lib/query-client`.
@@ -64,7 +83,7 @@ This document contains mandatory rules for frontend development, component compo
 
 ---
 
-## 5. Visual Design Tokens & Claymorphism Styling
+## 6. Visual Design Tokens & Claymorphism Styling
 
 - **Theme Palette**: Respect the Dark Slate & Indigo claymorphic tokens defined in `packages/ui/src/styles/globals.css`.
 - **Surfaces**:
@@ -73,4 +92,4 @@ This document contains mandatory rules for frontend development, component compo
   - Inset Controls: `bg-muted` / `bg-secondary`
 - **Primary CTA**: `bg-primary text-primary-foreground` (`#818cf8` / indigo-violet).
 - **Asynchronous Feedback**: Disable buttons and display `<Spinner className="mr-2 h-4 w-4" />` during mutation/submit states.
-- **Empty States**: Render the `<Empty>` primitive for zero-data lists (orders, reviews, products).
+- **Empty States**: Render the `<EmptyState>` / `<OperationalEmptyState>` primitives for zero-data lists (orders, reviews, products).

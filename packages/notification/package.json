@@ -1,0 +1,23 @@
+{
+  "name": "@hono-commerce/notification",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./notify": "./src/notify.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono-commerce/env": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hono-commerce/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

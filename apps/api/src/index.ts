@@ -25,9 +25,14 @@ app.use(
 
 app.on(["POST", "GET"], "/api/v1/auth/*", (c) => auth.handler(c.req.raw));
 
-const routes = app.basePath("/api/v1").get("/health", (c) => {
-  return c.json({ status: "ok" });
-});
+import { storageRouter } from "./routes/storage";
+
+const routes = app
+  .basePath("/api/v1")
+  .get("/health", (c) => {
+    return c.json({ status: "ok" });
+  })
+  .route("/storage", storageRouter);
 
 app.get("/", (c) => {
   return c.text("OK");
