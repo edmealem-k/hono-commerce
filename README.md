@@ -1,6 +1,6 @@
 # hono-commerce
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Hono, TRPC, and more.
+This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Hono, and more.
 
 ## Features
 
@@ -9,7 +9,6 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **TailwindCSS** - Utility-first CSS for rapid UI development
 - **Shared UI package** - shadcn/ui primitives live in `packages/ui`
 - **Hono** - Lightweight, performant server framework
-- **tRPC** - End-to-end type-safe APIs
 - **Bun** - Runtime environment
 - **Drizzle** - TypeScript-first ORM
 - **PostgreSQL** - Database engine
@@ -100,10 +99,9 @@ For more details, see the guide on [Deploying with Docker Compose](https://www.b
 hono-commerce/
 ├── apps/
 │   ├── web/         # Frontend application (Next.js)
-│   └── server/      # Backend API (Hono, TRPC)
+│   └── server/      # Backend API (Hono)
 ├── packages/
 │   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
 │   ├── auth/        # Authentication configuration & logic
 │   └── db/          # Database schema & queries
 ```

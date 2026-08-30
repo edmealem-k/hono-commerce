@@ -1,10 +1,7 @@
 import { env } from "@hono-commerce/env/web";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import { toast } from "sonner";
+import { hc } from "hono/client";
 
-import type { AppRouter } from "@hono-commerce/api/routers/index";
+import type { AppType } from "server";
 
 function getServerUrl(url: string) {
   const processEnv = (
@@ -41,36 +38,12 @@ function getServerUrl(url: string) {
 
   return `http://localhost:3000${normalized}`;
 }
-export const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: (error, query) => {
-      toast.error(error.message, {
-        action: {
-          label: "retry",
-          onClick: () => {
-            query.invalidate();
-          },
-        },
-      });
-    },
-  }),
-});
 
-const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: `${getServerUrl(env.NEXT_PUBLIC_SERVER_URL)}/trpc`,
-      fetch(url, options) {
-        return fetch(url, {
-          ...options,
-          credentials: "include",
-        });
-      },
-    }),
-  ],
-});
-
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: trpcClient,
-  queryClient,
+export const apiClient = hc<AppType>(getServerUrl(env.NEXT_PUBLIC_SERVER_URL), {
+  fetch(input: RequestInfo | URL, init?: RequestInit) {
+    return fetch(input, {
+      ...init,
+      credentials: "include",
+    });
+  },
 });

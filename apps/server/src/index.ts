@@ -1,8 +1,5 @@
-import { createContext } from "@hono-commerce/api/context";
-import { appRouter } from "@hono-commerce/api/routers/index";
 import { auth } from "@hono-commerce/auth";
 import { env } from "@hono-commerce/env/server";
-import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -22,18 +19,13 @@ app.use(
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-app.use(
-  "/trpc/*",
-  trpcServer({
-    router: appRouter,
-    createContext: (_opts, context) => {
-      return createContext({ context });
-    },
-  }),
-);
+const routes = app.basePath("/api").get("/health", (c) => {
+  return c.json({ status: "ok" });
+});
 
 app.get("/", (c) => {
   return c.text("OK");
 });
 
+export type AppType = typeof routes;
 export default app;

@@ -1,19 +1,17 @@
 "use client";
+
 import { authClient } from "@/lib/auth-client";
-import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard({
   session,
 }: {
   session: typeof authClient.$Infer.Session;
 }) {
-  console.log({ session });
-  const privateData = useQuery(trpc.privateData.queryOptions());
-
   return (
-    <>
-      <p>API: {privateData.data?.message}</p>
-    </>
+    <div className="mt-4 rounded-lg border p-4">
+      <p className="text-muted-foreground text-sm">
+        Logged in as: {session?.user?.email}
+      </p>
+    </div>
   );
 }
