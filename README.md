@@ -1,5 +1,7 @@
 # hono-commerce
 
+[![wakatime](https://wakatime.com/badge/github/edmealem-k/hono-commerce.svg)](https://wakatime.com/badge/github/edmealem-k/hono-commerce)
+
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Hono, and more.
 
 ## Features
