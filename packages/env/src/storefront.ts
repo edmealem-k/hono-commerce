@@ -4,7 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   client: {
     NEXT_PUBLIC_SERVER_URL: z.url().default("http://localhost:3000"),
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
   },
   server: {
     PORT: z.coerce.number().default(3001),

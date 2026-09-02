@@ -13,9 +13,12 @@
     "start": "bun run dist/index.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1121.0",
+    "@aws-sdk/s3-request-presigner": "^3.1121.0",
     "@hono-commerce/auth": "workspace:*",
     "@hono-commerce/db": "workspace:*",
     "@hono-commerce/env": "workspace:*",
+    "@hono/zod-validator": "^0.9.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",
