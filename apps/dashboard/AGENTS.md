@@ -49,7 +49,12 @@ This document contains mandatory rules for frontend development, component compo
 ## 2. Route Groups & Portal Structure
 
 - **`/(tenant)`**: Merchant store management portal (Products, Orders, Inventory, Settings, Support Chat).
+  - Roles: `owner` (full control, billing, payouts) and `member` (store staff, operations).
 - **`/(admin)`**: Platform superadmin portal (Tenants, Platform Metrics, Escalations, Bull-Board Monitoring).
+  - Roles: `admin` (superadmin) and `staff` (platform operations, moderation).
+- **Forward-Compatible Permission Gating**:
+  - Always wrap restricted actions/buttons with `<PermissionGate permission="...">` rather than writing hardcoded `if (user.role === '...')` checks.
+  - Permissions are cached on the session (`session.user.permissions`) on login.
 
 ---
 

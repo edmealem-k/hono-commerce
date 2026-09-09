@@ -10,6 +10,8 @@ import {
 import { Store, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
+import type { Route } from "next";
+
 export default function DashboardPortalSelector() {
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6">
@@ -41,7 +43,7 @@ export default function DashboardPortalSelector() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/products" className="w-full">
+              <Link href={"/default/products" as Route} className="w-full">
                 <Button className="w-full">Open Store Dashboard</Button>
               </Link>
             </CardContent>
@@ -59,7 +61,7 @@ export default function DashboardPortalSelector() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/tenants" className="w-full">
+              <Link href="/admin/tenants" className="w-full">
                 <Button variant="secondary" className="w-full">
                   Open Superadmin
                 </Button>

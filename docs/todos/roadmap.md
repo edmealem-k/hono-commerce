@@ -20,14 +20,22 @@ This document serves as the master functional requirements specification for the
 
 ### 1.2 Team Management & Role-Based Access Control (RBAC)
 
-- [ ] **Staff Invitations**: Invite team members via email with role assignments and token expiration.
-- [ ] **Granular Roles & Permissions**:
-  - [ ] `Owner`: Full store control, financial payouts, billing, and team management.
-  - [ ] `Admin`: Access to products, orders, customers, and settings (excluding payout bank details).
-  - [ ] `Store Manager`: Catalog editing, order fulfillment, and discount management.
-  - [ ] `Support Agent`: Customer live chat, order lookup, and review replies.
-  - [ ] `Fulfillment Staff`: Barcode scanning, order packing slips, and shipping label assignment.
-- [ ] **Activity & Audit Log**: Immutable record of staff logins, product price modifications, refunds, and permission changes.
+- [ ] **Streamlined Role Taxonomy**:
+  - [ ] **Platform Roles (Superadmin)**: `admin` (full platform governance) and `staff` (operations, support, and moderation).
+  - [ ] **Merchant Roles (Tenant)**: `owner` (store creator, financial/payout control, settings) and `member` (store staff, catalog/order handling).
+- [ ] **Session-Cached Permissions**:
+  - [ ] Resolve user permissions once upon authentication/login and attach them directly to the session object (`session.user.permissions`).
+  - [ ] Eliminate per-request/per-render database lookups for permission checks across frontend and backend.
+- [ ] **Forward-Compatible Authorization Helper (`hasPermission`)**:
+  - [ ] Create a shared `hasPermission(authContext, permission)` helper in `@hono-commerce/auth` with full signature support.
+  - [ ] Phase 1: Provide permissive positive access for authenticated users with valid role, ensuring all call sites (routes, actions) adhere to the standard authorization API contract.
+  - [ ] Phase 2: Incrementally enhance with fine-grained permission string evaluation without changing callers.
+- [ ] **Frontend `<PermissionGate>` Wrapper Component**:
+  - [ ] Declarative component accepting `children`, `permission`, and optional `fallback` (defaulting to `null`).
+  - [ ] Conditionally renders sensitive controls (e.g. refund buttons, payout settings, staff invite forms) based on active session permissions.
+- [ ] **Staff Invitations & Activity Log**:
+  - [ ] Invite team members via email with role assignments (`owner` / `member` for merchants; `admin` / `staff` for platform).
+  - [ ] Immutable audit log recording logins, pricing edits, refunds, and permission changes.
 
 ---
 

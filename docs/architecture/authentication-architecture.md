@@ -124,44 +124,121 @@ export const { useSession, signIn, signUp, signOut } = authClient;
 
 ### B. Dashboard (`apps/dashboard`)
 
-The dashboard is **strictly gated** with two authorization tiers:
+The dashboard is **strictly gated** with two authorization tiers and a forward-compatible role taxonomy:
 
-1. **Merchant Portal (`/(tenant)`)**:
-   - Manages tenant products, inventory, orders, customer messages, and settings.
-   - Access verified by tenant membership: `owner`, `admin`, `member`.
-   - Tenant switcher dynamically swaps active workspace context without re-authenticating.
-2. **Platform Superadmin (`/(admin)`)**:
+1. **Merchant Portal (`/(tenant)/[slug]`)**:
+   - Manages tenant products, inventory, orders, customer messages, team, and settings.
+   - **Roles**:
+     - `owner`: Store creator / primary owner with full administrative authority.
+     - `member`: Store staff, collaborators, and operators.
+   - **Multi-Tenant Multi-Role Membership**:
+     - A single user account can be associated with multiple stores simultaneously.
+     - A user may be an `owner` of Store A and a `member` of Store B.
+     - Permissions and roles are resolved per tenant membership (`session.user.memberships`).
+2. **Platform Superadmin (`/(admin)/admin`)**:
    - Manages all stores, platform-wide analytics, review moderation, and BullMQ worker queues.
-   - Gated strictly by `user.role === 'admin'`.
+   - **Roles**:
+     - `admin`: Superadmin with unrestricted platform governance and configuration.
+     - `staff`: Internal platform support and operations personnel.
+   - A platform `staff` or `admin` user can concurrently own or collaborate on individual merchant stores.
 
-### Server Component Route Guard (Next.js App Router)
+---
+
+## 6. Next.js 16 Edge Proxy & Routing Architecture (`proxy.ts`)
+
+In Next.js 16, `middleware.ts` is deprecated in favor of **`proxy.ts`** running on the Node.js runtime.
+
+### A. Subdomain Rewrite Rules (`apps/dashboard/src/proxy.ts`)
+
+```
+admin.shop.com/*    --> rewrites internally to /admin/*
+[slug].shop.com/*   --> rewrites internally to /[slug]/*
+shop.com/*          --> serves root portal selector /
+```
+
+### B. Header Injection Defense & Regex Verification
+
+1. **Strip Client Spoofing**: `proxy.ts` strips any incoming client `x-tenant-slug` headers before downstream processing (`requestHeaders.delete("x-tenant-slug")`).
+2. **Regex Validation**: Subdomains are validated against RFC-compliant DNS labels: `/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/`. Reserved subdomains (`admin`, `api`, `auth`, `www`, `app`, etc.) cannot be claimed as tenant stores.
+3. **Internal Route Hierarchy**:
+   - Platform routes are located at `apps/dashboard/src/app/(admin)/admin/...`
+   - Merchant routes are located at `apps/dashboard/src/app/(tenant)/[slug]/...`
+   - Both layouts receive typed `params: Promise<{ slug: string }>` natively from Next.js App Router without brittle header casting.
+
+---
+
+## 7. Chained Route-Level Middleware Pipeline (`apps/api`)
+
+API security is implemented via chained, single-responsibility Hono middlewares (`apps/api/src/lib/auth/*`):
+
+```mermaid
+flowchart LR
+    Request["Incoming Request"] --> RequireAuth["requireAuth()<br/>401 Unauthorized"]
+    RequireAuth --> RequireTenant["requireTenantContext()<br/>400 Bad Request"]
+    RequireTenant --> RequirePerm["requirePermission(key)<br/>403 Forbidden"]
+    RequirePerm --> Controller["Route Controller"]
+```
+
+1. **`requireAuth()`**:
+   - Resolves session via Better Auth (`auth.api.getSession({ headers })`).
+   - Rejects with `401 Unauthorized` if unauthenticated.
+   - Injects `user` and `session` into Hono context (`c.set("user", user)`).
+2. **`requireTenantContext()`**:
+   - Extracts tenant slug from verified `x-tenant-slug` header or Host subdomain.
+   - Rejects with `400 Bad Request` if tenant context is missing.
+   - Injects `tenantSlug` into Hono context (`c.set("tenantSlug", tenantSlug)`).
+3. **`requirePermission(permissionKey)`**:
+   - Evaluates user's effective permissions for the requested tenant context using `hasPermission(user, permission, { tenantId })`.
+   - Automatically grants access to platform `admin` users across all tenants.
+   - Rejects with `403 Forbidden` if the user lacks the required permission.
+
+---
+
+## 8. Forward-Compatible RBAC & Client Component Gating
+
+### 1. Unified Permission Evaluation Contract (`@hono-commerce/auth/permissions`)
+
+```ts
+export type PlatformRole = "admin" | "staff";
+export type MerchantRole = "owner" | "member";
+export type UserRole = PlatformRole | MerchantRole | "customer" | "guest";
+
+export interface AuthorizationSubject {
+  id?: string;
+  role?: string | null;
+  globalRole?: PlatformRole | null;
+  memberships?: Array<{
+    tenantId: string;
+    role: MerchantRole;
+    permissions?: string[];
+  }>;
+  permissions?: string[];
+}
+
+export function hasPermission(
+  user: AuthorizationSubject | null | undefined,
+  permission: string,
+  options?: { tenantId?: string },
+): boolean;
+```
+
+### 2. Declarative UI Gating (`<PermissionGate>`)
 
 ```tsx
-// apps/dashboard/src/app/(tenant)/layout.tsx
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+// packages/ui/src/shared/auth/permission-gate.tsx
+import { hasPermission } from "@hono-commerce/auth/permissions";
 
-export default async function TenantProtectedLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await authClient.getSession({
-    fetchOptions: { headers: await headers() },
-  });
-
-  if (!session?.data?.user) {
-    redirect("/login");
-  }
-
-  return <>{children}</>;
-}
+<PermissionGate
+  permission="WORKSPACE:ORDERS:REFUND"
+  fallback={<Badge tone="muted">Restricted</Badge>}
+>
+  <Button variant="destructive">Process Refund</Button>
+</PermissionGate>;
 ```
 
 ---
 
-## 6. Security & Anti-Prop-Drilling Invariants
+## 9. Security & Anti-Prop-Drilling Invariants
 
 1. **Anti-Prop-Drilling Rule**:
    - Never drill `userId`, `tenantId`, or `role` through nested component props.

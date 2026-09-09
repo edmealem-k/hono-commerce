@@ -1,13 +1,23 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@hono-commerce/ui/components/button";
 import { Building2, ShieldAlert, Headphones, ChevronLeft } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 
-export default function AdminDashboardLayout({
+import type { Route } from "next";
+
+export default async function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headerList = await headers();
+  const host =
+    headerList.get("x-forwarded-host") || headerList.get("host") || "";
+  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
+  const isSubdomain = hostname.startsWith("admin.");
+  const prefix = isSubdomain ? "" : "/admin";
+
   return (
     <div className="bg-background flex min-h-screen">
       {/* Superadmin Sidebar */}
@@ -27,21 +37,21 @@ export default function AdminDashboardLayout({
 
           <nav className="space-y-1">
             <Link
-              href="/tenants"
+              href={`${prefix}/tenants` as Route}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Building2 className="text-muted-foreground size-4" />
               Tenants & Subscriptions
             </Link>
             <Link
-              href="/moderation"
+              href={`${prefix}/moderation` as Route}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <ShieldAlert className="text-muted-foreground size-4" />
               Review Moderation
             </Link>
             <Link
-              href="/platform-chat"
+              href={`${prefix}/platform-chat` as Route}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Headphones className="text-muted-foreground size-4" />

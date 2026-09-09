@@ -175,7 +175,14 @@ High-level reusable modules used across `storefront` and `dashboard`:
    - Never save permanent public URLs in the database for private tenant files or KYC documents. Save the `s3Key` and generate short-lived signed URLs via `/api/v1/storage/preview-url` or `getReadSignedUrl()`.
 5. **Notification Non-Blocking Invariant**:
    - Notifications and side-effects must be triggered AFTER database transactions commit, using `notifyUser()` / `notifyTenant()` or by enqueuing a BullMQ job via `@hono-commerce/queue`.
-6. **Code Quality & Verification Invariant**:
+6. **Forward-Compatible RBAC & Role Taxonomy Invariant**:
+   - Strictly adhere to the platform and tenant role taxonomy:
+     - **Platform**: `admin` (superadmin) and `staff` (operations/support).
+     - **Merchant**: `owner` (store creator, payouts, billing) and `member` (staff, catalog, orders).
+   - Never write fragile ad-hoc inline role checks (e.g. `if (user.role === 'admin')`) in UI components or route handlers.
+   - Always gate features using the forward-compatible `hasPermission(authContext, permission)` helper on the server and `<PermissionGate permission="...">` on the frontend.
+   - Permissions must be resolved once upon login and attached directly to the user session (`session.user.permissions`) to eliminate per-request or per-render database permission queries.
+7. **Code Quality & Verification Invariant**:
    - Treat this document as mandatory guidance across the entire repository.
    - Run `bun run check-types` and `bun run check` (`oxlint && oxfmt --write`) before concluding tasks.
    - Maintain **0 warnings and 0 errors** on all TypeScript and linter checks.

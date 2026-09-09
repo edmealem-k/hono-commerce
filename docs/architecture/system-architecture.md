@@ -59,23 +59,32 @@ hono-commerce/
 
 ## 3. Multi-Tenancy & Domain Routing Architecture
 
+In Next.js 16, edge domain routing and security filtering are executed via **`proxy.ts`** on the Node.js runtime:
+
 ```mermaid
 graph TD
-    UserReq[Incoming HTTP Request] --> EdgeMW[Next.js Middleware: Host Header Extraction]
+    UserReq[Incoming HTTP Request] --> Proxy[Next.js 16 proxy.ts: Host Header Extraction]
+    Proxy --> StripSpoof[Strip untrusted client x-tenant-slug header]
+    StripSpoof --> CheckDomain{Host Type?}
 
-    EdgeMW --> CheckDomain{Host Type?}
-
-    CheckDomain -->|shop.com| RootStore[Serve Global Platform Marketplace / Directory]
-    CheckDomain -->|{slug}.shop.com| SubdomainStore[Extract Tenant Slug]
+    CheckDomain -->|admin.shop.com| AdminDomain[Internal Rewrite to /admin/*]
+    CheckDomain -->|{slug}.shop.com| TenantDomain[Validate RFC Slug Regex]
     CheckDomain -->|customdomain.com| CustomStore[Query Redis/DB CNAME Mapping]
+    CheckDomain -->|shop.com| RootStore[Serve Portal Selector / Directory]
 
-    CustomStore --> ResolveTenant[Resolve Tenant Slug & ID]
-    SubdomainStore --> ResolveTenant
-
-    ResolveTenant --> RewriteURL[Rewrite internally to /_tenants/[slug]/...]
-    RewriteURL --> InjectHeaders[Inject Headers: x-tenant-id, x-tenant-slug]
+    CustomStore --> ResolveTenant[Resolve Tenant Slug]
+    TenantDomain --> ResolveTenant
+    ResolveTenant --> RewriteURL[Rewrite internally to /[slug]/*]
+    RewriteURL --> InjectHeaders[Inject verified Header: x-tenant-slug]
     InjectHeaders --> AppRouter[Next.js App Router Page Renderer]
+    AdminDomain --> AppRouter
 ```
+
+### Next.js 16 Folder Structure & Route Mapping
+
+- **Superadmin Portal**: `apps/dashboard/src/app/(admin)/admin/` (Accessible via `admin.shop.com/*` rewritten to `/admin/*`).
+- **Tenant Portal**: `apps/dashboard/src/app/(tenant)/[slug]/` (Accessible via `[slug].shop.com/*` rewritten to `/[slug]/*`).
+- **Storefront**: `apps/storefront/src/app/` (Resolves tenant from subdomain or custom CNAME, verified via `proxy.ts`).
 
 ### Database Partitioning: Shared Database with `tenant_id`
 
