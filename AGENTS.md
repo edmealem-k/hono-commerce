@@ -175,7 +175,23 @@ High-level reusable modules used across `storefront` and `dashboard`:
    - Never save permanent public URLs in the database for private tenant files or KYC documents. Save the `s3Key` and generate short-lived signed URLs via `/api/v1/storage/preview-url` or `getReadSignedUrl()`.
 5. **Notification Non-Blocking Invariant**:
    - Notifications and side-effects must be triggered AFTER database transactions commit, using `notifyUser()` / `notifyTenant()` or by enqueuing a BullMQ job via `@hono-commerce/queue`.
-6. **Code Quality & Verification Invariant**:
+6. **Forward-Compatible RBAC & Role Taxonomy Invariant**:
+   - Strictly adhere to the platform and tenant role taxonomy:
+     - **Platform**: `admin` (superadmin) and `staff` (operations/support).
+     - **Merchant**: `owner` (store creator, payouts, billing) and `member` (staff, catalog, orders).
+   - Never write fragile ad-hoc inline role checks (e.g. `if (user.role === 'admin')`) in UI components or route handlers.
+   - Always gate features using the forward-compatible `hasPermission(authContext, permission)` helper on the server and `<PermissionGate permission="...">` on the frontend.
+   - Permissions must be resolved once upon login and attached directly to the user session (`session.user.permissions`) to eliminate per-request or per-render database permission queries.
+7. **Code Quality & Verification Invariant (No Build Rule)**:
    - Treat this document as mandatory guidance across the entire repository.
    - Run `bun run check-types` and `bun run check` (`oxlint && oxfmt --write`) before concluding tasks.
+   - **DO NOT run `bun run build`** (or `turbo run build`) during development task verification. Running `bun run check-types` and `bun run check` is sufficient and prevents unnecessary overhead and compile locks.
    - Maintain **0 warnings and 0 errors** on all TypeScript and linter checks.
+8. **Environment Variable Management Invariant (`packages/env` & `.env.example`)**:
+   - Whenever ANY environment variable is introduced, referenced, or used in ANY application or package, you MUST:
+     1. Add its type-safe schema and runtime binding to `@hono-commerce/env` (`packages/env/src/<app>.ts`).
+     2. Document it in the corresponding `.env.example` file(s) for every app that consumes it.
+   - Never reference undeclared or raw `process.env` variables in application code without registering them in `@hono-commerce/env` and `.env.example`.
+9. **Strict Type Inference & No-Assertion Invariant**:
+   - Never use type assertions (`as Route`, `as any`, or `as unknown as ...`) to silence routing or component type errors.
+   - All types must be naturally inferred. Use module augmentations (such as `link.d.ts` for Next.js routes) or accurate schema typings to resolve discrepancies at their architectural source.

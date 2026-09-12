@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import { routes } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
 import { Building2, ShieldAlert, Headphones, ChevronLeft } from "lucide-react";
 import Link from "next/link";
@@ -20,28 +21,28 @@ export default function AdminDashboardLayout({
             <div>
               <div className="text-sm font-semibold">Superadmin</div>
               <div className="text-muted-foreground text-xs">
-                admin.shop.com
+                admin.localhost:3002
               </div>
             </div>
           </div>
 
           <nav className="space-y-1">
             <Link
-              href="/tenants"
+              href={routes.admin.tenants}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Building2 className="text-muted-foreground size-4" />
               Tenants & Subscriptions
             </Link>
             <Link
-              href="/moderation"
+              href={routes.admin.moderation}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <ShieldAlert className="text-muted-foreground size-4" />
               Review Moderation
             </Link>
             <Link
-              href="/platform-chat"
+              href={routes.admin.platformChat}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Headphones className="text-muted-foreground size-4" />

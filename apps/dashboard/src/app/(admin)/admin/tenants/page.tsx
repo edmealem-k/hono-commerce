@@ -73,7 +73,7 @@ export default function SuperadminTenantsPage() {
               <TableRow>
                 <TableCell className="font-medium">Acme Apparel</TableCell>
                 <TableCell className="font-mono text-xs">
-                  acme.shop.com
+                  acme.localhost:3002
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">Pro ($49/mo)</Badge>

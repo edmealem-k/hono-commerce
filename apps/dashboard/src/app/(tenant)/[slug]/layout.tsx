@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import { routes } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Package,
@@ -9,52 +10,56 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function TenantDashboardLayout({
+export default async function TenantDashboardLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
+
   return (
     <div className="bg-background flex min-h-screen">
       {/* Sidebar */}
       <aside className="border-border bg-card/50 flex w-64 flex-col justify-between border-r p-4">
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
-            <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg font-bold">
-              H
+            <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg font-bold uppercase">
+              {slug[0] || "T"}
             </div>
             <div>
-              <div className="text-sm font-semibold">Store Manager</div>
+              <div className="text-sm font-semibold capitalize">{slug}</div>
               <div className="text-muted-foreground text-xs">
-                tenant-slug.shop.com
+                {slug}.localhost:3002
               </div>
             </div>
           </div>
 
           <nav className="space-y-1">
             <Link
-              href="/products"
+              href={routes.tenant.products}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Package className="text-muted-foreground size-4" />
               Products & Variants
             </Link>
             <Link
-              href="/orders"
+              href={routes.tenant.orders}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <ShoppingCart className="text-muted-foreground size-4" />
               Orders & Fulfillment
             </Link>
             <Link
-              href="/team"
+              href={routes.tenant.team}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Users className="text-muted-foreground size-4" />
               Team & Permissions
             </Link>
             <Link
-              href="/chat"
+              href={routes.tenant.chat}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <MessageSquare className="text-muted-foreground size-4" />

@@ -1,0 +1,74 @@
+import { NextResponse, type NextRequest } from "next/server";
+
+const TENANT_SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const RESERVED_SUBDOMAINS = new Set([
+  "admin",
+  "api",
+  "auth",
+  "www",
+  "app",
+  "static",
+  "assets",
+  "cdn",
+  "localhost",
+]);
+
+export function proxy(req: NextRequest) {
+  const host =
+    req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
+  const url = req.nextUrl.clone();
+
+  // Strip any client-supplied tenant headers to prevent header injection
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.delete("x-tenant-slug");
+
+  // 1. Platform Superadmin: admin.localhost:3002 or admin.yourdomain.com
+  if (hostname.startsWith("admin.")) {
+    // If the path doesn't already start with /admin, rewrite it internally
+    if (!url.pathname.startsWith("/admin")) {
+      url.pathname = `/admin${url.pathname}`;
+    }
+    return NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
+  }
+
+  // 2. Tenant Store Subdomain: [tenantSlug].localhost:3002 or [tenantSlug].yourdomain.com
+  const rawSubdomain = hostname.split(".")[0] ?? "";
+
+  if (rawSubdomain && !RESERVED_SUBDOMAINS.has(rawSubdomain)) {
+    if (!TENANT_SLUG_REGEX.test(rawSubdomain)) {
+      return new NextResponse("Invalid store identifier", { status: 400 });
+    }
+
+    // Set verified tenant slug header for downstream server components
+    requestHeaders.set("x-tenant-slug", rawSubdomain);
+
+    // If the path doesn't already start with /[slug], rewrite it internally
+    if (!url.pathname.startsWith(`/${rawSubdomain}`)) {
+      url.pathname = `/${rawSubdomain}${url.pathname}`;
+    }
+
+    return NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
+  }
+
+  // 3. Fallback: Root host (localhost:3002 or dashboard.yourdomain.com) -> serves portal selector /
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static chunks)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt
+     */
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
+};

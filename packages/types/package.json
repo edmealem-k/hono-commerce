@@ -1,0 +1,17 @@
+{
+  "name": "@hono-commerce/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@hono-commerce/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
