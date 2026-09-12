@@ -21,7 +21,7 @@ export default function AdminDashboardLayout({
             <div>
               <div className="text-sm font-semibold">Superadmin</div>
               <div className="text-muted-foreground text-xs">
-                admin.shop.com
+                admin.localhost:3002
               </div>
             </div>
           </div>

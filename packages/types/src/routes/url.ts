@@ -24,7 +24,7 @@ export function getBaseUrl(options?: BaseUrlOptions): string {
       options?.rootDomain ||
       (typeof process !== "undefined" &&
         process.env?.NEXT_PUBLIC_ROOT_DOMAIN) ||
-      "shop.com";
+      (options?.portal === "storefront" ? "localhost:3001" : "localhost:3002");
 
     if (options?.subdomain) {
       return `https://${options.subdomain}.${rootDomain}`;

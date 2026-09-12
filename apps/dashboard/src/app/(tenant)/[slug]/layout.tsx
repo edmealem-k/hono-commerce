@@ -31,7 +31,7 @@ export default async function TenantDashboardLayout({
             <div>
               <div className="text-sm font-semibold capitalize">{slug}</div>
               <div className="text-muted-foreground text-xs">
-                {slug}.shop.com
+                {slug}.localhost:3002
               </div>
             </div>
           </div>
