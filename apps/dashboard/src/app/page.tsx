@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import { routes, toSubdomainUrl } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Card,
@@ -8,11 +9,11 @@ import {
   CardTitle,
 } from "@hono-commerce/ui/components/card";
 import { Store, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-
-import type { Route } from "next";
 
 export default function DashboardPortalSelector() {
+  const storeUrl = toSubdomainUrl("default", routes.tenant.products);
+  const adminUrl = toSubdomainUrl("admin", routes.admin.tenants);
+
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6">
       <div className="absolute top-6 right-6">
@@ -43,9 +44,9 @@ export default function DashboardPortalSelector() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={"/default/products" as Route} className="w-full">
+              <a href={storeUrl} className="w-full">
                 <Button className="w-full">Open Store Dashboard</Button>
-              </Link>
+              </a>
             </CardContent>
           </Card>
 
@@ -61,11 +62,11 @@ export default function DashboardPortalSelector() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/admin/tenants" className="w-full">
+              <a href={adminUrl} className="w-full">
                 <Button variant="secondary" className="w-full">
                   Open Superadmin
                 </Button>
-              </Link>
+              </a>
             </CardContent>
           </Card>
         </div>

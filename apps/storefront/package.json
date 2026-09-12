@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hono-commerce/env": "workspace:*",
+    "@hono-commerce/types": "workspace:*",
     "@hono-commerce/ui": "workspace:*",
     "@hookform/resolvers": "catalog:",
     "@swc/helpers": "catalog:",

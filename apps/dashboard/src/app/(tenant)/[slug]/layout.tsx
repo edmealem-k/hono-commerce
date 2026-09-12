@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import { routes } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Package,
@@ -7,10 +8,7 @@ import {
   MessageSquare,
   ChevronLeft,
 } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
-
-import type { Route } from "next";
 
 export default async function TenantDashboardLayout({
   children,
@@ -20,13 +18,6 @@ export default async function TenantDashboardLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const headerList = await headers();
-  const host =
-    headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
-  const rawSubdomain = hostname.split(".")[0] ?? "";
-  const isSubdomain = rawSubdomain !== "localhost" && hostname.includes(".");
-  const prefix = isSubdomain ? "" : `/${slug}`;
 
   return (
     <div className="bg-background flex min-h-screen">
@@ -47,28 +38,28 @@ export default async function TenantDashboardLayout({
 
           <nav className="space-y-1">
             <Link
-              href={`${prefix}/products` as Route}
+              href={routes.tenant.products}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Package className="text-muted-foreground size-4" />
               Products & Variants
             </Link>
             <Link
-              href={`${prefix}/orders` as Route}
+              href={routes.tenant.orders}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <ShoppingCart className="text-muted-foreground size-4" />
               Orders & Fulfillment
             </Link>
             <Link
-              href={`${prefix}/team` as Route}
+              href={routes.tenant.team}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Users className="text-muted-foreground size-4" />
               Team & Permissions
             </Link>
             <Link
-              href={`${prefix}/chat` as Route}
+              href={routes.tenant.chat}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <MessageSquare className="text-muted-foreground size-4" />

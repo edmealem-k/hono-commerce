@@ -1,23 +1,14 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import { routes } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
 import { Building2, ShieldAlert, Headphones, ChevronLeft } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 
-import type { Route } from "next";
-
-export default async function AdminDashboardLayout({
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const headerList = await headers();
-  const host =
-    headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const hostname = host.split(":")[0]?.toLowerCase() ?? "";
-  const isSubdomain = hostname.startsWith("admin.");
-  const prefix = isSubdomain ? "" : "/admin";
-
   return (
     <div className="bg-background flex min-h-screen">
       {/* Superadmin Sidebar */}
@@ -37,21 +28,21 @@ export default async function AdminDashboardLayout({
 
           <nav className="space-y-1">
             <Link
-              href={`${prefix}/tenants` as Route}
+              href={routes.admin.tenants}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Building2 className="text-muted-foreground size-4" />
               Tenants & Subscriptions
             </Link>
             <Link
-              href={`${prefix}/moderation` as Route}
+              href={routes.admin.moderation}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <ShieldAlert className="text-muted-foreground size-4" />
               Review Moderation
             </Link>
             <Link
-              href={`${prefix}/platform-chat` as Route}
+              href={routes.admin.platformChat}
               className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
             >
               <Headphones className="text-muted-foreground size-4" />

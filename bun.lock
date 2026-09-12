@@ -46,6 +46,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@hono-commerce/env": "workspace:*",
+        "@hono-commerce/types": "workspace:*",
         "@hono-commerce/ui": "workspace:*",
         "@hookform/resolvers": "catalog:",
         "@swc/helpers": "catalog:",
@@ -80,6 +81,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@hono-commerce/env": "workspace:*",
+        "@hono-commerce/types": "workspace:*",
         "@hono-commerce/ui": "workspace:*",
         "@hookform/resolvers": "catalog:",
         "@swc/helpers": "catalog:",
@@ -168,6 +170,14 @@
       "devDependencies": {
         "@hono-commerce/config": "workspace:*",
         "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/types": {
+      "name": "@hono-commerce/types",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@hono-commerce/config": "workspace:*",
         "typescript": "catalog:",
       },
     },
@@ -436,6 +446,8 @@
     "@hono-commerce/env": ["@hono-commerce/env@workspace:packages/env"],
 
     "@hono-commerce/notification": ["@hono-commerce/notification@workspace:packages/notification"],
+
+    "@hono-commerce/types": ["@hono-commerce/types@workspace:packages/types"],
 
     "@hono-commerce/ui": ["@hono-commerce/ui@workspace:packages/ui"],
 

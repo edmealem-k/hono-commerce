@@ -80,11 +80,12 @@ graph TD
     AdminDomain --> AppRouter
 ```
 
-### Next.js 16 Folder Structure & Route Mapping
+### Next.js 16 Folder Structure & Subdomain Invariant
 
-- **Superadmin Portal**: `apps/dashboard/src/app/(admin)/admin/` (Accessible via `admin.shop.com/*` rewritten to `/admin/*`).
-- **Tenant Portal**: `apps/dashboard/src/app/(tenant)/[slug]/` (Accessible via `[slug].shop.com/*` rewritten to `/[slug]/*`).
-- **Storefront**: `apps/storefront/src/app/` (Resolves tenant from subdomain or custom CNAME, verified via `proxy.ts`).
+- **Local Dev & Production Parity**: Subdomains are strictly enforced in both development (`[slug].localhost:3002`, `admin.localhost:3002` via RFC 6761) and production (`[slug].shop.com`, `admin.shop.com`).
+- **Superadmin Portal**: `apps/dashboard/src/app/(admin)/admin/` (Accessible via `admin.localhost:3002/*` or `admin.shop.com/*` rewritten silently to `/admin/*`). Visible URLs remain `/tenants`, `/moderation`, etc.
+- **Tenant Portal**: `apps/dashboard/src/app/(tenant)/[slug]/` (Accessible via `[slug].localhost:3002/*` or `[slug].shop.com/*` rewritten silently to `/[slug]/*`). Visible URLs remain `/products`, `/orders`, etc.
+- **Storefront**: `apps/storefront/src/app/` (Resolves tenant from subdomain `[slug].localhost:3001` or custom CNAME, verified via `proxy.ts`).
 
 ### Database Partitioning: Shared Database with `tenant_id`
 
