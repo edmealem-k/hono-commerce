@@ -21,8 +21,6 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@hono-commerce/types": ["../../packages/types/src/index.ts"],
-      "@hono-commerce/types/*": ["../../packages/types/src/*"],
       "@hono-commerce/ui/*": ["../../packages/ui/src/*"],
       "api": ["../api/src/index.ts"]
     }

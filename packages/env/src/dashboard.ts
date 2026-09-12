@@ -18,5 +18,7 @@ export const env = createEnv({
     PORT: process.env.PORT,
     NODE_ENV: process.env.NODE_ENV,
   },
+  skipValidation:
+    !!process.env.SKIP_ENV_VALIDATION || process.env.CI === "true",
   emptyStringAsUndefined: true,
 });

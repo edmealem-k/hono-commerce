@@ -1,4 +1,4 @@
-export function getServerUrl(url: string) {
+export function getServerUrl(url?: string) {
   const processEnv = (
     globalThis as {
       process?: { env?: Record<string, string | undefined> };
@@ -11,7 +11,8 @@ export function getServerUrl(url: string) {
       : processEnv.SERVER_URL;
   }
 
-  const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
+  const safeUrl = url || "http://localhost:3000";
+  const normalized = safeUrl.endsWith("/") ? safeUrl.slice(0, -1) : safeUrl;
 
   if (!normalized.startsWith("/")) {
     return normalized;
