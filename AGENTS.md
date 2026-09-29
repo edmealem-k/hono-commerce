@@ -17,7 +17,7 @@ This document contains mandatory architectural, database, backend API, and event
   - `packages/auth`: Better Auth configuration with Drizzle PostgreSQL adapter.
   - `packages/ui`: Shared Shadcn / Base UI component library.
   - `packages/env`: Type-safe environment variable validation (`@t3-oss/env-*`).
-  - `packages/types`: Shared Zod schemas, DTOs, and domain types.
+  - `packages/types`: Shared Zod request input schemas, route catalog, and domain types.
   - `packages/queue`: Pluggable Queue Manager, BullMQ definitions, and typed event publishers.
   - `packages/notification`: Email templates (React Email / Nodemailer) and notification handlers.
   - `packages/config`: Shared configurations for TypeScript, ESLint, Oxlint, and Tailwind CSS.
@@ -58,8 +58,12 @@ This document contains mandatory architectural, database, backend API, and event
 
     export type AppType = typeof routes;
     ```
+- **Hono RPC Response Type Inference (ADR-005)**:
+  - Frontend applications and consumers MUST infer response payloads directly from Hono endpoints using `InferResponseType<typeof apiClient.api.v1.[domain].$get, 200>` (from `hono/client`).
+  - Never declare redundant, manual response DTOs or response schemas in `@hono-commerce/types`.
 - **Request Validation**:
   - Validate all request inputs (`json`, `query`, `param`) using `zod` schemas via `@hono/zod-validator` (`zValidator`).
+  - Shared request input schemas live in `@hono-commerce/types`.
 - **Data Isolation**:
   - Every tenant API endpoint must extract `tenantId` from the authenticated session or verified hostname and filter database queries with `where(eq(table.tenantId, tenantId))`.
 - **Standardized JSON Response Shape**:
@@ -195,3 +199,11 @@ High-level reusable modules used across `storefront` and `dashboard`:
 9. **Strict Type Inference & No-Assertion Invariant**:
    - Never use type assertions (`as Route`, `as any`, or `as unknown as ...`) to silence routing or component type errors.
    - All types must be naturally inferred. Use module augmentations (such as `link.d.ts` for Next.js routes) or accurate schema typings to resolve discrepancies at their architectural source.
+10. **Agentic Spec-Driven Development (SDD) Invariant**:
+
+- When requested to build or significantly modify a feature, domain flow, or API, you MUST follow the 5-phase Spec-Kit lifecycle before writing implementation code:
+  1.  **Specify**: Scaffold `docs/specs/<NNN-feature>/spec.md` using `docs/specs/_template/spec.md`. Define Given-When-Then acceptance scenarios, RFC 2119 invariants, and edge cases. Align with user on the specification.
+  2.  **Plan**: Scaffold `docs/specs/<NNN-feature>/plan.md`. Map monorepo package impact and define contracts.
+  3.  **Tasks**: Scaffold `docs/specs/<NNN-feature>/tasks.md` with ordered, verifiable checklists.
+  4.  **Implement**: Contract-first. Implement shared request input schemas and route catalog in `@hono-commerce/types`; infer response types directly via Hono RPC (`InferResponseType`) rather than hand-writing response DTOs.
+  5.  **Converge**: Run `bun run verify` (`oxlint && oxfmt --check && turbo run check-types`) to achieve 0 warnings and 0 errors.

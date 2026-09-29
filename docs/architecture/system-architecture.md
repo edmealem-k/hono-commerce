@@ -50,9 +50,14 @@ hono-commerce/
 │   ├── ui/                      # Shared UI component library (shadcn/ui + Tailwind v4)
 │   ├── notification/            # Email templates (React Email / Nodemailer), push notifications
 │   ├── queue/                   # Pluggable Queue Manager, BullMQ definitions, typed event publishers
-│   ├── types/                   # Shared Zod schemas, DTOs, permission catalog & domain types
+│   ├── types/                   # Shared Zod request schemas, route catalog & domain types
 │   ├── config/                  # Shared TypeScript, ESLint & Tailwind configs
 │   └── env/                     # Type-safe environment variable schema validation
+│
+└── docs/
+    ├── architecture/            # Architectural blueprints & ADR registry (README.md)
+    └── specs/                   # Living feature specifications (Spec-Driven Development)
+        └── _template/           # spec.md, plan.md, tasks.md templates
 ```
 
 ---
@@ -671,3 +676,23 @@ export const chatMessage = pgTable(
 | **Phase 4: BullMQ & Background Jobs** | Async Processing Pipeline   | `apps/worker`, BullMQ processors, Stripe webhook consumer, transactional emails, delayed cart recovery, Bull-Board admin UI.                      |
 | **Phase 5: Real-Time Chat**           | Live Communication Engine   | `apps/realtime` (Socket.io + Redis Pub/Sub), Customer Support widget, Tenant Team room, Admin escalation channel.                                 |
 | **Phase 6: Reviews & Moderation**     | Feedback & Quality Control  | Verified buyer review submission, tenant owner response UI, admin review moderation.                                                              |
+
+---
+
+## 11. Spec-Driven Development (SDD) & Verification Lifecycle
+
+All non-trivial engineering tasks follow the 5-phase Spec-Kit lifecycle before code execution:
+
+```mermaid
+flowchart LR
+    A["1. Specify\n(docs/specs/<feature>/spec.md)"] --> B["2. Plan\n(docs/specs/<feature>/plan.md)"]
+    B --> C["3. Tasks\n(docs/specs/<feature>/tasks.md)"]
+    C --> D["4. Implement\n(Contract-First)"]
+    D --> E["5. Converge\n(bun run verify)"]
+```
+
+1. **Specify**: Define requirements, Given-When-Then scenarios, and RFC 2119 invariants.
+2. **Plan**: Map affected monorepo packages, Zod schemas, DB migrations, and API paths.
+3. **Tasks**: Break implementation into atomic, phased checklists.
+4. **Implement**: Contract-first in `@hono-commerce/types` before backend or UI implementation.
+5. **Converge**: Run `bun run verify` (`oxlint && oxfmt --check && turbo run check-types`) to guarantee 0 errors and 0 warnings.

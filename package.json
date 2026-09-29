@@ -30,7 +30,8 @@
       "drizzle-orm": "^0.45.2",
       "@types/pg": "^8.20.0",
       "@hookform/resolvers": "^5.9.1",
-      "react-hook-form": "^7.86.0"
+      "react-hook-form": "^7.86.0",
+      "nextjs-toploader": "^3.9.17"
     }
   },
   "type": "module",
@@ -52,6 +53,7 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "check": "oxlint && oxfmt --write",
+    "verify": "oxlint && oxfmt --check && turbo run check-types",
     "prepare": "husky"
   },
   "dependencies": {
@@ -70,8 +72,10 @@
     "typescript": "catalog:"
   },
   "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "oxlint --no-error-on-unmatched-pattern"
+    ],
     "*": [
-      "oxlint",
       "oxfmt --write"
     ]
   },

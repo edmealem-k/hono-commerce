@@ -103,9 +103,17 @@ Defined in `packages/types/src/routes/catalog.ts`:
   - `routes.admin.tenant({ tenantId: string })` (`/tenants/${tenantId}`)
   - `routes.storefront.product({ handle: string })` (`/products/${handle}`)
 
-#### Layer 2: Natural Type Inference & Zero Assertions
+#### Layer 2: Natural Type Inference & Next.js `typedRoutes` Decision
 
-Components consume routes directly with natural TypeScript inference — **no type assertions (`as Route`) and no `any`**:
+Next.js 16 features an experimental `typedRoutes: true` compiler option. However, `typedRoutes` validates `<Link href>` strictly against physical disk folders (`src/app/(tenant)/[slug]/products`). In our subdomain-first architecture, browser URLs are rewritten silently by `proxy.ts` so users visit clean paths (`/products`, `/tenants`).
+
+Because Next.js's filesystem router has no awareness of subdomain proxy rewrites, `typedRoutes: true` flags clean paths as non-existent routes, forcing developers into dangerous type assertions (`as Route` or `as any`) or clashing `.d.ts` module overrides.
+
+**Decision (ADR-004)**: `typedRoutes: true` is disabled in `next.config.ts`. Full type safety is maintained via the centralized `@hono-commerce/types/routes` catalog:
+
+- Parameterless routes are simple string properties.
+- Parameterized routes require exact parameter objects.
+- Zero type assertions (`as Route` or `as any`) are required anywhere in application components.
 
 ```tsx
 import { routes } from "@/lib/routes";
@@ -131,9 +139,31 @@ export function OrderRow({ order }: { order: { id: string } }) {
 }
 ```
 
-#### Layer 3: Centralized Subdomain Resolution (`useRoutes` & `toSubdomainUrl`)
+#### Layer 3: Centralized Origin & Subdomain Resolution (`getBaseUrl` & `toSubdomainUrl`)
 
-When client components need the active tenant context without prop-drilling:
+Provided universally in `@hono-commerce/types/routes` for both server and client environments:
+
+```ts
+import {
+  getBaseUrl,
+  toSubdomainUrl,
+  routes,
+} from "@hono-commerce/types/routes";
+
+// 1. Get origin for a tenant dashboard
+getBaseUrl({ subdomain: "nike", portal: "dashboard" });
+// Dev:  "http://nike.localhost:3002"
+// Prod: "https://nike.localhost:3002" (or custom root domain)
+
+// 2. Build full cross-subdomain URL
+const storeUrl = toSubdomainUrl("default", routes.tenant.products);
+// Dev:  "http://default.localhost:3002/products"
+// Prod: "https://default.localhost:3002/products"
+```
+
+#### Layer 4: Client Hook (`useRoutes`)
+
+When client components need the active tenant slug without prop-drilling:
 
 ```tsx
 "use client";
@@ -146,19 +176,21 @@ export function StoreHeader() {
 }
 ```
 
-For cross-subdomain navigation (e.g. portal selector linking to store dashboard):
+---
 
-```ts
-import { routes, toSubdomainUrl } from "@/lib/routes";
+## 5. Public Routes & Proxy Exclusions
 
-const storeUrl = toSubdomainUrl("default", routes.tenant.products);
-// Local development: "http://default.localhost:3002/products"
-// Production:        "https://default.shop.com/products"
-```
+Public landing and authentication pages bypass tenant slug rewrites:
+
+- `/verify-email`: Better Auth email verification landing.
+- `/reset-password`: Secure password reset token form.
+- `/invitations/[invitationId]`: Workspace invitation acceptance.
+
+In `apps/dashboard/src/proxy.ts`, public paths matching `PUBLIC_PATHS` serve the root dashboard application directly without internal rewrite to `/[slug]/*`.
 
 ---
 
-## 5. Summary of Conventions for AI Agents & Developers
+## 6. Summary of Conventions for AI Agents & Developers
 
 1. **Always develop using subdomains**:
    - Open `http://nike.localhost:3002` for store features.
@@ -168,3 +200,5 @@ const storeUrl = toSubdomainUrl("default", routes.tenant.products);
    - Never write type assertions (`as Route` or `as any`). Let TypeScript infer types naturally.
 3. **Never expose `/[slug]` in visible browser URLs**:
    - `proxy.ts` silently handles internal folder routing. Visible URLs must remain `/products`, `/orders`, etc.
+4. **Follow Agentic SDD for New Routes**:
+   - Register new route patterns in `packages/types/src/routes/catalog.ts` before creating views.
