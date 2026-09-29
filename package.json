@@ -30,7 +30,8 @@
       "drizzle-orm": "^0.45.2",
       "@types/pg": "^8.20.0",
       "@hookform/resolvers": "^5.9.1",
-      "react-hook-form": "^7.86.0"
+      "react-hook-form": "^7.86.0",
+      "nextjs-toploader": "^3.9.17"
     }
   },
   "type": "module",

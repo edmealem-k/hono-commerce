@@ -1,4 +1,5 @@
 import { Providers } from "@/components/providers";
+import NextTopLoader from "nextjs-toploader";
 
 import type { Metadata } from "next";
 import "../index.css";
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
+        <NextTopLoader showSpinner={false} />
         <Providers>{children}</Providers>
       </body>
     </html>

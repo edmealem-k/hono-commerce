@@ -1,5 +1,6 @@
 import Header from "@/components/header";
 import Providers from "@/components/providers";
+import NextTopLoader from "nextjs-toploader";
 
 import "../index.css";
 
@@ -18,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
+        <NextTopLoader showSpinner={false} />
         <Providers>
           <div className="grid h-svh grid-rows-[auto_1fr]">
             <Header />
