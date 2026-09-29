@@ -52,20 +52,31 @@ Requests matching `PUBLIC_PATHS` serve the root app directly and bypass tenant s
 
 ---
 
-## 4. UI Architecture (`apps/dashboard/src/app/(public)`)
+## 4. UI Architecture & Design System Integration (`apps/dashboard/src/app/(public)`)
+
+All public pages strictly adhere to [`packages/ui/DESIGN.md`](file:///home/edmealem.k/Downloads/hono-commerce/packages/ui/DESIGN.md) and [`ui-ux-pro-max`](file:///home/edmealem.k/Downloads/hono-commerce/.agents/skills/ui-ux-pro-max/SKILL.md) guidelines:
 
 Directory structure:
 
 ```text
 apps/dashboard/src/app/(public)/
-├── layout.tsx                     # Centered clean card layout with theme toggle
+├── layout.tsx                     # Centered card layout (max-w-md), subtle radial glow, theme toggle
 ├── verify-email/
-│   └── page.tsx                   # Client component with token evaluation & status pills
+│   └── page.tsx                   # Token validation states (Loading pulse, Success pill, Expired recovery CTA)
 ├── reset-password/
-│   └── page.tsx                   # New password form with strength indicators
+│   └── page.tsx                   # Password reset with live strength indicator & accessible focus rings
 └── invitations/
     └── [invitationId]/
-        └── page.tsx               # Invitation card with Accept / Decline actions
+        └── page.tsx               # Linear-style invitation card (Store avatar, role pill, Accept / Decline)
 ```
 
-Component styling uses Base UI primitives (`@hono-commerce/ui/components/*`).
+### State Specifications (6-State Matrix):
+
+- **Email Verification**:
+  - _Loading_: Pulsing mail icon (`size-10 text-primary animate-pulse`), `text-muted-foreground` helper text.
+  - _Success_: Emerald `StatusPill` (`tone="success"`), bold confirmation, and auto-redirect countdown.
+  - _Expired / Error_: Clear explanation alert, primary "Request new link" action.
+- **Invitation Card**:
+  - Store identity header with tenant avatar and monospace slug pill.
+  - Clear role badge (`StatusPill` with `tone="primary"`).
+  - Explicit button pairing: `Accept Invitation` (Primary `Button` with loading state) and `Decline` (`Button variant="ghost"`).

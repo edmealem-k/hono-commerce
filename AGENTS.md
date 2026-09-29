@@ -188,8 +188,8 @@ High-level reusable modules used across `storefront` and `dashboard`:
    - Permissions must be resolved once upon login and attached directly to the user session (`session.user.permissions`) to eliminate per-request or per-render database permission queries.
 7. **Code Quality & Verification Invariant (No Build Rule)**:
    - Treat this document as mandatory guidance across the entire repository.
-   - Run `bun run check-types` and `bun run check` (`oxlint && oxfmt --write`) before concluding tasks.
-   - **DO NOT run `bun run build`** (or `turbo run build`) during development task verification. Running `bun run check-types` and `bun run check` is sufficient and prevents unnecessary overhead and compile locks.
+   - Run `bun run verify` (`oxlint && oxfmt --check && turbo run check-types`) before concluding tasks. Use `bun run check` (`oxlint && oxfmt --write`) to automatically format code when needed.
+   - **DO NOT run `bun run build`** (or `turbo run build`) during development task verification. Running `bun run verify` is sufficient and prevents unnecessary overhead and compile locks.
    - Maintain **0 warnings and 0 errors** on all TypeScript and linter checks.
 8. **Environment Variable Management Invariant (`packages/env` & `.env.example`)**:
    - Whenever ANY environment variable is introduced, referenced, or used in ANY application or package, you MUST:
@@ -207,3 +207,8 @@ High-level reusable modules used across `storefront` and `dashboard`:
   3.  **Tasks**: Scaffold `docs/specs/<NNN-feature>/tasks.md` with ordered, verifiable checklists.
   4.  **Implement**: Contract-first. Implement shared request input schemas and route catalog in `@hono-commerce/types`; infer response types directly via Hono RPC (`InferResponseType`) rather than hand-writing response DTOs.
   5.  **Converge**: Run `bun run verify` (`oxlint && oxfmt --check && turbo run check-types`) to achieve 0 warnings and 0 errors.
+
+11. **Design System & Visual Quality Invariant (`packages/ui/DESIGN.md` & `ui-ux-pro-max`)**:
+    - All UI components, pages, forms, and views across `apps/dashboard`, `apps/storefront`, and `@hono-commerce/ui` must strictly follow [`packages/ui/DESIGN.md`](file:///home/edmealem.k/Downloads/hono-commerce/packages/ui/DESIGN.md).
+    - Never use arbitrary raw hex colors or inline style overrides; always leverage semantic Tailwind v4 tokens from `globals.css`.
+    - Implement the mandatory 6-state matrix (Initial, Loading, Success, Empty, Error, Expired) for every interactive feature and form to guarantee zero layout shifts and seamless user feedback.
