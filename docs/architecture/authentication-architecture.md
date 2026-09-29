@@ -150,20 +150,24 @@ In Next.js 16, `middleware.ts` is deprecated in favor of **`proxy.ts`** running 
 
 ### A. Subdomain Rewrite Rules (`apps/dashboard/src/proxy.ts`)
 
-```
-admin.shop.com/*    --> rewrites internally to /admin/*
-[slug].shop.com/*   --> rewrites internally to /[slug]/*
-shop.com/*          --> serves root portal selector /
-```
+| Host / Path Pattern     | Dev Example                    | Prod Example                   | Internal Rewrite Target               |
+| :---------------------- | :----------------------------- | :----------------------------- | :------------------------------------ |
+| `admin.<root>/*`        | `admin.localhost:3002/tenants` | `admin.localhost:3002/tenants` | `/admin/tenants`                      |
+| `[slug].<root>/*`       | `nike.localhost:3002/products` | `nike.localhost:3002/products` | `/nike/products`                      |
+| `<root>/[public-paths]` | `localhost:3002/verify-email`  | `localhost:3002/verify-email`  | Serves root public pages (no rewrite) |
+| `<root>/`               | `localhost:3002/`              | `localhost:3002/`              | Serves portal selector `/`            |
+
+Public authentication and recovery pages (`/verify-email`, `/reset-password`, `/invitations/*`) bypass tenant slug rewrites (see `docs/specs/001-auth-public-pages/spec.md`).
 
 ### B. Header Injection Defense & Regex Verification
 
 1. **Strip Client Spoofing**: `proxy.ts` strips any incoming client `x-tenant-slug` headers before downstream processing (`requestHeaders.delete("x-tenant-slug")`).
 2. **Regex Validation**: Subdomains are validated against RFC-compliant DNS labels: `/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/`. Reserved subdomains (`admin`, `api`, `auth`, `www`, `app`, etc.) cannot be claimed as tenant stores.
 3. **Internal Route Hierarchy**:
+   - Public auth routes are located at `apps/dashboard/src/app/(public)/...`
    - Platform routes are located at `apps/dashboard/src/app/(admin)/admin/...`
    - Merchant routes are located at `apps/dashboard/src/app/(tenant)/[slug]/...`
-   - Both layouts receive typed `params: Promise<{ slug: string }>` natively from Next.js App Router without brittle header casting.
+   - Tenant layouts receive typed `params: Promise<{ slug: string }>` natively from Next.js App Router without brittle header casting.
 
 ---
 

@@ -78,6 +78,7 @@ This document contains mandatory rules for frontend development, component compo
 ## 5. Client Data Fetching (Hono Native RPC + TanStack Query)
 
 - **Frontend RPC Client**: Always use `apiClient` from `@/lib/api-client` (`hc<AppType>`). Never make un-typed ad-hoc `fetch("/api/...")` requests.
+- **Response Type Inference (ADR-005)**: Infer query and mutation response types directly via `InferResponseType<typeof apiClient.api.v1.[domain].$get, 200>` from `hono/client`. Do NOT create redundant hand-written response DTOs.
 - **Client-Side Queries & Mutations**: Wrap API calls in TanStack Query (`useQuery`, `useMutation`) using `getQueryClient()` from `@/lib/query-client`.
 - **Number & Currency Formatting**: Always apply `tabular-nums` class to prices, metrics, dates, and live numbers (e.g. `<span className="tabular-nums">$15,231.89</span>`) to prevent horizontal layout shift.
 
