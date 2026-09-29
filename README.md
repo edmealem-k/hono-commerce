@@ -119,7 +119,8 @@ hono-commerce/
 - `bun run db:generate`: Generate database client/types
 - `bun run db:migrate`: Run database migrations
 - `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Oxlint and Oxfmt
+- `bun run check`: Run Oxlint and Oxfmt (auto-format)
+- `bun run verify`: Full verification (Oxlint + Oxfmt format check + Turborepo typechecks)
 - `bun run docker:build`: Build the Docker Compose images
 - `bun run docker:up`: Build and start the Docker Compose stack
 - `bun run docker:logs`: Tail logs from the Docker Compose stack
