@@ -157,7 +157,7 @@ In Next.js 16, `middleware.ts` is deprecated in favor of **`proxy.ts`** running 
 | `<root>/[public-paths]` | `localhost:3002/verify-email`  | `localhost:3002/verify-email`  | Serves root public pages (no rewrite) |
 | `<root>/`               | `localhost:3002/`              | `localhost:3002/`              | Serves portal selector `/`            |
 
-Public authentication and recovery pages (`/verify-email`, `/reset-password`, `/invitations/*`) bypass tenant slug rewrites (see `docs/specs/001-auth-public-pages/spec.md`).
+Public authentication and recovery pages (`/verify-email`, `/reset-password`, `/invitations/*`) bypass tenant slug rewrites (see `docs/specs/002-auth-public-pages/spec.md`).
 
 ### B. Header Injection Defense & Regex Verification
 

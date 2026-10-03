@@ -31,7 +31,14 @@
       "@types/pg": "^8.20.0",
       "@hookform/resolvers": "^5.9.1",
       "react-hook-form": "^7.86.0",
-      "nextjs-toploader": "^3.9.17"
+      "nextjs-toploader": "^3.9.17",
+      "bullmq": "^5.41.0",
+      "ioredis": "^5.4.1",
+      "resend": "^4.1.2",
+      "@react-email/components": "^0.0.33",
+      "@react-email/render": "^1.0.5",
+      "@bull-board/api": "^6.7.0",
+      "@bull-board/hono": "^6.7.0"
     }
   },
   "type": "module",

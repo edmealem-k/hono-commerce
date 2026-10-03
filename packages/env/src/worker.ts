@@ -8,6 +8,7 @@ export const env = createEnv({
     REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
     STRIPE_SECRET_KEY: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().default("Hono Commerce <noreply@hono-commerce.com>"),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

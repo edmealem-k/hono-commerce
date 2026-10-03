@@ -1,6 +1,6 @@
 # Feature Specification: Public Auth & Management Pages
 
-**Feature ID**: `001-auth-public-pages`  
+**Feature ID**: `002-auth-public-pages`  
 **Status**: `Draft`  
 **Architecture Reference**: `docs/architecture/authentication-architecture.md`, `docs/architecture/routing-and-proxy-architecture.md`  
 **Target Packages**: `packages/types`, `apps/dashboard`, `apps/api`

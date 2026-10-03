@@ -14,7 +14,7 @@ export interface AuthorizationSubject {
   id?: string;
   role?: string | null;
   permissions?: string[];
-  [key: string]: unknown;
+  [key: string]: string | number | boolean | null | undefined | string[];
 }
 
 export interface PermissionCheckOptions {

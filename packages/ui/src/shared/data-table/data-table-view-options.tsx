@@ -23,7 +23,7 @@ export function DataTableViewOptions<TData>({
   const columns = table
     .getAllColumns()
     .filter(
-      (col: Column<TData, unknown>) =>
+      (col: Column<TData>) =>
         typeof col.accessorFn !== "undefined" && col.getCanHide(),
     );
 
@@ -46,7 +46,7 @@ export function DataTableViewOptions<TData>({
           Toggle columns
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {columns.map((column: Column<TData, unknown>) => {
+        {columns.map((column: Column<TData>) => {
           const isVisible = column.getIsVisible();
           return (
             <DropdownMenuItem
