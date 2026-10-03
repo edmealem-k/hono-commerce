@@ -1,0 +1,25 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono-commerce/env": "workspace:*",
+    "@hono-commerce/notification": "workspace:*",
+    "@hono-commerce/queue": "workspace:*",
+    "bullmq": "catalog:",
+    "ioredis": "catalog:",
+    "resend": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hono-commerce/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

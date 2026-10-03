@@ -284,6 +284,16 @@ This document serves as the master functional requirements specification for the
 - [ ] **Dashboard Notification Bell**: Real-time dropdown alerting merchants of urgent operational events.
 - [ ] **Notification Preferences**: Configurable settings allowing users to toggle email, in-app, and push channels per event type.
 
+### 11.3 Role-Targeted Tenant & System Fan-Out Engine
+
+- [ ] **Dependency**: Blocked on `packages/db` schema for `tenant_member` and platform user roles.
+- [ ] **Role-Scoped Real-time Delivery**: Route live in-app notifications to Socket.io / Redis pub/sub rooms (`tenant:${tenantId}:role:${role}` and `system:role:${role}`).
+- [ ] **Asynchronous External Fan-Out Job**:
+  - [ ] Enqueue `tenant-notifications-fanout` job to BullMQ when `channels.email` or `channels.push` is active.
+  - [ ] Consumer in `apps/worker` queries `tenant_member` joined with `user` where `role IN (:targetRoles)`.
+  - [ ] Evaluate recipient notification preferences (`shouldDeliverNotification`) per user.
+  - [ ] Fan out individual, idempotent `enqueueEmail` delivery jobs.
+
 ---
 
 ## 12. Analytics, Financials & Reporting

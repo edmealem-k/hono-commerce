@@ -1,7 +1,13 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { routes } from "@/lib/routes";
 import { Button } from "@hono-commerce/ui/components/button";
-import { Building2, ShieldAlert, Headphones, ChevronLeft } from "lucide-react";
+import {
+  Building2,
+  ShieldAlert,
+  Headphones,
+  Activity,
+  ChevronLeft,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboardLayout({
@@ -47,6 +53,13 @@ export default function AdminDashboardLayout({
             >
               <Headphones className="text-muted-foreground size-4" />
               Escalation Support
+            </Link>
+            <Link
+              href={routes.admin.queues}
+              className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
+            >
+              <Activity className="text-muted-foreground size-4" />
+              Background Queues
             </Link>
           </nav>
         </div>

@@ -1,0 +1,26 @@
+{
+  "name": "@hono-commerce/queue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./jobs/*": "./src/jobs/*.ts",
+    "./publishers/*": "./src/publishers/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono-commerce/env": "workspace:*",
+    "bullmq": "catalog:",
+    "ioredis": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hono-commerce/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

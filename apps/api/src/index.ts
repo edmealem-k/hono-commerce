@@ -4,6 +4,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+import { queuesRouter } from "./routes/admin/queues";
+import { storageRouter } from "./routes/storage";
+
 const app = new Hono();
 
 app.use(logger());
@@ -24,8 +27,8 @@ app.use(
 );
 
 app.on(["POST", "GET"], "/api/v1/auth/*", (c) => auth.handler(c.req.raw));
-
-import { storageRouter } from "./routes/storage";
+app.route("/admin/queues", queuesRouter);
+app.get("/admin/queues/", (c) => c.redirect("/admin/queues", 301));
 
 const routes = app
   .basePath("/api/v1")

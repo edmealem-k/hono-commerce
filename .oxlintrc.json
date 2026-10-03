@@ -5,7 +5,19 @@
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/no-restricted-types": [
+      "error",
+      {
+        "types": {
+          "unknown": {
+            "message": "Do not use loose `unknown` as an escape hatch or casting target. Define strict domain schemas, generics, or type-safe discriminated unions instead."
+          }
+        }
+      }
+    ]
+  },
   "env": {
     "builtin": true
   }

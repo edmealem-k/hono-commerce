@@ -44,7 +44,7 @@ export type AllNotificationTypes =
 export interface NotificationPayloadData {
   title: string;
   message: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, string | number | boolean | null>;
   actionUrl?: string;
 }
 
@@ -57,11 +57,19 @@ export interface UserNotificationPayload {
 
 export interface TenantNotificationPayload {
   tenantId: string;
+  /**
+   * Filter recipients by member role (e.g. ["owner"], ["owner", "member"]).
+   * TODO(auth-schema): Bind to MerchantRole ("owner" | "member") once auth & tenantMember schema is finalized.
+   */
   targetRoles?: string[];
   data: NotificationPayloadData;
 }
 
 export interface SystemNotificationPayload {
+  /**
+   * Filter recipients by platform role (e.g. ["admin"], ["staff"]).
+   * TODO(auth-schema): Bind to PlatformRole ("admin" | "staff") once platform RBAC schema is finalized.
+   */
   systemRoles?: string[];
   data: NotificationPayloadData;
 }

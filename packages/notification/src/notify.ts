@@ -83,6 +83,10 @@ export async function notifyTenant(
     );
   }
 
+  // TODO(auth-schema): Once tenant_member DB schema is implemented:
+  // If channels.email or channels.push is requested, enqueue a tenant-notifications-fanout
+  // job in apps/worker to query members matching payload.targetRoles and dispatch per-user.
+
   const results = await Promise.allSettled(promises);
   const anySuccessful = results.some(
     (r) => r.status === "fulfilled" && r.value === true,
@@ -116,6 +120,10 @@ export async function notifySystem(
       }),
     );
   }
+
+  // TODO(auth-schema): Once platform user roles DB schema is implemented:
+  // If channels.email or channels.push is requested, enqueue a system-notifications-fanout
+  // job in apps/worker to query platform users matching payload.systemRoles and dispatch per-user.
 
   const results = await Promise.allSettled(promises);
   const anySuccessful = results.some(

@@ -17,7 +17,7 @@ export const env = createEnv({
       .default("development"),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
-    REDIS_URL: z.string().min(1),
+    REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
     AWS_REGION: z.string().default("us-east-1"),
     AWS_ACCESS_KEY_ID: z.string().min(1),
     AWS_SECRET_ACCESS_KEY: z.string().min(1),

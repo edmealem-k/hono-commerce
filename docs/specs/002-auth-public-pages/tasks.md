@@ -1,8 +1,8 @@
 # Tasks: Public Auth & Management Pages
 
-**Feature ID**: `001-auth-public-pages`  
-**Specification**: `docs/specs/001-auth-public-pages/spec.md`  
-**Plan**: `docs/specs/001-auth-public-pages/plan.md`
+**Feature ID**: `002-auth-public-pages`  
+**Specification**: `docs/specs/002-auth-public-pages/spec.md`  
+**Plan**: `docs/specs/002-auth-public-pages/plan.md`
 
 ---
 

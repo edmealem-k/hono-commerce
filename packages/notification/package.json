@@ -13,11 +13,16 @@
   },
   "dependencies": {
     "@hono-commerce/env": "workspace:*",
+    "@hono-commerce/queue": "workspace:*",
+    "@react-email/components": "catalog:",
+    "@react-email/render": "catalog:",
+    "react": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@hono-commerce/config": "workspace:*",
     "@types/bun": "catalog:",
+    "@types/react": "catalog:",
     "typescript": "catalog:"
   }
 }

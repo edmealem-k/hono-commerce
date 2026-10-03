@@ -329,7 +329,7 @@ function ChartLegendContent({
 
 function getPayloadConfigFromPayload(
   config: ChartConfig,
-  payload: unknown,
+  payload: object | string | number | boolean | null | undefined,
   key: string,
 ) {
   if (typeof payload !== "object" || payload === null) {

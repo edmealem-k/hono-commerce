@@ -6,7 +6,7 @@ export interface InAppNotificationRecord {
   title: string;
   message: string;
   actionUrl?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, string | number | boolean | null>;
   createdAt: Date;
 }
 

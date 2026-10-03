@@ -84,6 +84,11 @@ This document contains mandatory architectural, database, backend API, and event
     - `cron-payouts` (Nightly @ 00:00 UTC: Stripe Connect split reconciliation).
     - `cron-analytics` (Hourly: tenant GMV & metric rollups).
   - **Visual Monitoring**: Bull-Board dashboard mounted in `apps/dashboard/(admin)`.
+- **Domain-Isolated Jobs Architecture (`packages/queue/src/jobs/*`)**:
+  - All queue-specific contracts, payload schemas, template prop schemas, and discriminated unions MUST be isolated in domain modules under `packages/queue/src/jobs/<domain>.ts` (e.g. `jobs/email.ts`, `jobs/orders.ts`, `jobs/stripe-webhooks.ts`, `jobs/inventory.ts`).
+  - `packages/queue/src/types.ts` is reserved strictly for queue-wide definitions (`QueueName`, `QueueNameType`, `EnqueueEmailOptions`) and re-exporting domain job types (`export * from "./jobs/email"`).
+  - Composed job schemas must use `Base<Domain>JobSchema.and(<Domain>PayloadSchema)` with support for optional multi-tenant context (`tenantId?: string`) and `idempotencyKey?: string`.
+  - Export subpaths in `packages/queue/package.json` must map `"./jobs/*": "./src/jobs/*.ts"` to enable clean domain imports without cluttering the package root.
 - **Strict Decoupling Invariant**:
   - Application routes (`apps/api`, `apps/storefront`, `apps/dashboard`) MUST NEVER import BullMQ directly.
   - All event publishing MUST go through typed functions exported by `@hono-commerce/queue` (`packages/queue/src/publishers/*`) to allow pluggable future expansion (e.g. Golang microservices or RabbitMQ bridges).
@@ -196,9 +201,14 @@ High-level reusable modules used across `storefront` and `dashboard`:
      1. Add its type-safe schema and runtime binding to `@hono-commerce/env` (`packages/env/src/<app>.ts`).
      2. Document it in the corresponding `.env.example` file(s) for every app that consumes it.
    - Never reference undeclared or raw `process.env` variables in application code without registering them in `@hono-commerce/env` and `.env.example`.
-9. **Strict Type Inference & No-Assertion Invariant**:
-   - Never use type assertions (`as Route`, `as any`, or `as unknown as ...`) to silence routing or component type errors.
-   - All types must be naturally inferred. Use module augmentations (such as `link.d.ts` for Next.js routes) or accurate schema typings to resolve discrepancies at their architectural source.
+9. **Strict Type Inference & Zero-Escape-Hatch Invariant (No `any`, No `unknown`)**:
+   - **Zero `any` and Zero `unknown`**: Never use `any` or `unknown` as escape hatches in type annotations, function signatures, or casting targets (e.g. `Record<string, unknown>`, `(x: any) => ...`, `props as unknown as ...`, `as any`).
+   - **Enforced via Oxlint**: Banned across the entire monorepo by `typescript/no-explicit-any` and `typescript/no-restricted-types`. Any occurrence will immediately fail `bun run check` and `bun run verify`.
+   - **Architectural Solutions**: Always model polymorphic payloads, event jobs, and function inputs using:
+     1. **Discriminated Unions**: e.g. `{ template: "magic-link"; props: MagicLinkEmailProps } | { template: "tenant-invitation"; props: InvitationEmailProps }`.
+     2. **Generic Lookup Maps / Registries**: e.g. `renderEmailTemplate<T extends EmailTemplate>(template: T, props: EmailTemplatePropsMap[T])`.
+     3. **Precise Domain Interfaces & Primitive Unions**: e.g. `Record<string, string | number | boolean | null>` instead of loose `Record<string, unknown>`.
+   - **No Type Assertions**: Never use type assertions (`as Route`, `as any`, or `as unknown as ...`) to silence routing or component type errors. All types must be naturally inferred or narrowed via type guards.
 10. **Agentic Spec-Driven Development (SDD) Invariant**:
 
 - When requested to build or significantly modify a feature, domain flow, or API, you MUST follow the 5-phase Spec-Kit lifecycle before writing implementation code:
