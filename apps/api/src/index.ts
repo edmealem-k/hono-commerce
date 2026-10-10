@@ -7,9 +7,9 @@ import { logger } from "hono/logger";
 
 import { fail } from "./lib/response";
 import { invitationsRouter } from "./modules/invitations/invitations.routes";
+import { storageRouter } from "./modules/storage/storage.routes";
 import { tenantsRouter } from "./modules/tenants/tenants.routes";
 import { queuesRouter } from "./routes/admin/queues";
-import { storageRouter } from "./routes/storage";
 
 const app = new Hono();
 

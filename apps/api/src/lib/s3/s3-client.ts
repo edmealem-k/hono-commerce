@@ -20,7 +20,7 @@ export function getS3Client(): S3Client {
     region: env.AWS_REGION || "us-east-1",
     credentials,
     endpoint: env.AWS_S3_ENDPOINT || undefined,
-    forcePathStyle: Boolean(env.AWS_S3_ENDPOINT), // Required for MinIO / LocalStack
+    forcePathStyle: env.AWS_S3_FORCE_PATH_STYLE || Boolean(env.AWS_S3_ENDPOINT),
   });
 
   return s3ClientInstance;
