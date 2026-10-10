@@ -12,8 +12,10 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono-commerce/db": "workspace:*",
     "@hono-commerce/env": "workspace:*",
     "@hono-commerce/queue": "workspace:*",
+    "@hono-commerce/types": "workspace:*",
     "@react-email/components": "catalog:",
     "@react-email/render": "catalog:",
     "react": "catalog:",

@@ -1,9 +1,10 @@
 import { auth } from "@hono-commerce/auth";
 
+import type { AuthEnv } from "../../types/auth";
 import type { Context, Next } from "hono";
 
 export function requireAuth() {
-  return async (c: Context, next: Next) => {
+  return async (c: Context<AuthEnv>, next: Next) => {
     try {
       const session = await auth.api.getSession({
         headers: c.req.raw.headers,
@@ -19,7 +20,18 @@ export function requireAuth() {
         );
       }
 
-      c.set("user", session.user);
+      const user = session.user;
+      if (user.status !== "active" || user.banned) {
+        return c.json(
+          {
+            error: "Account is suspended or deactivated",
+            code: "ACCOUNT_SUSPENDED",
+          },
+          403,
+        );
+      }
+
+      c.set("user", user);
       c.set("session", session.session);
       await next();
     } catch (error) {

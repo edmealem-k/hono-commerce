@@ -11,6 +11,7 @@ export const env = createEnv({
       .string()
       .min(1)
       .default("http://localhost:3001,http://localhost:3002"),
+    DASHBOARD_URL: z.string().url().default("http://localhost:3002"),
     PORT: z.coerce.number().default(3000),
     NODE_ENV: z
       .enum(["development", "production", "test"])

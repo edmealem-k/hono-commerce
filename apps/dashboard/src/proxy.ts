@@ -13,6 +13,8 @@ const RESERVED_SUBDOMAINS = new Set([
   "localhost",
 ]);
 
+const PUBLIC_PATHS = ["/sign-in", "/verify", "/invitations"];
+
 export function proxy(req: NextRequest) {
   const host =
     req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
@@ -22,6 +24,13 @@ export function proxy(req: NextRequest) {
   // Strip any client-supplied tenant headers to prevent header injection
   const requestHeaders = new Headers(req.headers);
   requestHeaders.delete("x-tenant-slug");
+
+  // Public routes bypass tenant rewriting and serve directly from /(public)
+  if (PUBLIC_PATHS.some((path) => url.pathname.startsWith(path))) {
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
 
   // 1. Platform Superadmin: admin.localhost:3002 or admin.yourdomain.com
   if (hostname.startsWith("admin.")) {

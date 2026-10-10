@@ -37,7 +37,9 @@ hono-commerce/
 │   ├── dashboard/               # Unified Management Portal (Next.js 16)
 │   │                            # - /(tenant) Store, Order & Team Management, Internal Chat
 │   │                            # - /(admin) Platform Superadmin, Moderation, Bull-Board, System Chat
+│   │                            # - /(public) Public Auth, Verification & Invitation Acceptance
 │   ├── api/                     # Core Backend API (Hono + Bun)
+
 │   │                            # - Hono REST & Typed RPC (hc), Webhooks (Stripe Inbound), Auth handlers
 │   ├── realtime/                # Dedicated WebSocket Server (Socket.io + Redis Adapter)
 │   │                            # - Customer Support, Tenant Team, and System Admin rooms
@@ -45,7 +47,7 @@ hono-commerce/
 │                                # - Order fulfillment, emails, webhooks, inventory locks, crons
 │
 ├── packages/
-│   ├── auth/                    # Better Auth (Organization plugin + custom RBAC permissions)
+│   ├── auth/                    # Better Auth (Session & Auth engine + custom multi-tenant & RBAC permissions)
 │   ├── db/                      # PostgreSQL + Drizzle ORM schemas and migration scripts
 │   ├── ui/                      # Shared UI component library (shadcn/ui + Tailwind v4)
 │   ├── notification/            # Email templates (React Email / Nodemailer), push notifications
@@ -145,6 +147,45 @@ graph TD
     FinalList --> Hono_Gate[Hono Middleware Authorization]
     FinalList --> UI_Gate[UI Hook & <PermissionGate /> Component]
 ```
+
+### C. Account Lifecycle & Structured `TenantContext` Authorization
+
+1. **Platform & Merchant Role Taxonomy**:
+   - **Platform Roles**: `admin` (superadmin), `staff` (support/operations), `customer` (storefront shopper).
+   - **Merchant Roles**: `owner` (store creator, billing, payouts), `member` (store staff, catalog, orders).
+2. **Account Lifecycle Enforcement (`requireAuth`)**:
+   - Users must have `user.status === "active"` and `!user.banned`. Suspended or deactivated users are rejected with `403 FORBIDDEN` (`ACCOUNT_SUSPENDED`).
+3. **Structured `TenantContext` Resolution (`requireTenantContext`)**:
+   - The tenant is resolved server-side from the URL `/api/v1/tenants/:tenantId/...`, NEVER trusting a client session's stale `activeTenantId` as authorization.
+   - The user must possess an active membership (`tenantMember.status === "active"`) in the target tenant.
+   - The resolved context attaches to Hono's typed context:
+     ```ts
+     type TenantContext = {
+       tenantId: string;
+       tenantSlug: string;
+       tenantStatus: "active" | "suspended" | "maintenance";
+       memberId: string;
+       role: "owner" | "member";
+     };
+     ```
+4. **Declarative Permission Gating (`requirePermission`)**:
+   - Compares requested permissions against the caller's role permissions (`hasPermission(role, permission)`).
+
+### D. Invitation Cryptographic Security & 2-Step Onboarding
+
+1. **Cryptographic JWT Claims & Single-Use Tokens**:
+   - Invitations issue HS256-signed JWTs (`jose`) binding `invitationId`, `tenantId`, `email`, and `role`.
+   - On resolution (`GET /api/v1/invitations/:invitationId?token=...`), the JWT claims are cross-checked against the database record to prevent token reuse or tampering.
+2. **Authenticated Acceptance & Inbox Ownership Verification**:
+   - Invitation acceptance (`PATCH /api/v1/invitations/:invitationId`) strictly requires an authenticated session matching the invitation's canonical email.
+   - Accepting an invitation automatically verifies email ownership via magic link prior to acceptance.
+3. **Atomic Status Transition & Membership Provisioning**:
+   - Status update (`accepted`) and `tenant_member` record creation are executed inside an atomic PostgreSQL `db.transaction(...)` with conditional locking, ensuring no partial state on failure.
+4. **2-Step Sliding Sign-In / Sign-Up Flow**:
+   - Step 1: User enters email. Frontend queries `POST /api/v1/auth/check-email`.
+   - Existing User: Direct magic link request dispatched.
+   - New User: Smooth sliding card transition to Step 2 requesting user's full name, creating the account, and sending the magic link.
+   - On magic link verification (`/verify`), user is redirected seamlessly back to the pending invitation URL.
 
 ---
 
@@ -262,7 +303,7 @@ sequenceDiagram
    - Automated tenant KYC/KYB identity verification and automated bank payouts.
 2. **Stripe Billing (Tenant Platform Subscriptions)**:
    - SaaS subscription tiers for tenants (Starter $29/mo, Pro $99/mo, Enterprise $299/mo).
-   - Webhook synchronization with Better Auth organization subscription metadata.
+   - Webhook synchronization with tenant subscription metadata.
 
 ---
 
@@ -401,111 +442,274 @@ To ensure architectural scalability and make future integrations (e.g. Go backen
 
 ---
 
+## 8. Core Backend API Architecture (`apps/api`)
+
+The core backend API runs on **Hono on Bun**, engineered around **Vertical Slices**, the **One-File-Per-Handler Pattern**, and **Type-Safe Hono RPC**.
+
+### A. Vertical Slice & Modular Domain Structure
+
+All business domains live in isolated modules under `apps/api/src/modules/<domain>/`:
+
+```text
+apps/api/src/
+├── modules/
+│   ├── tenants/                     # Store management & tenant-scoped subresources
+│   │   ├── tenants.routes.ts        # Declarative router mapping
+│   │   └── handlers/                # Dedicated single-operation handlers
+│   │       ├── create-tenant.ts
+│   │       ├── get-tenant.ts
+│   │       ├── update-tenant.ts
+│   │       ├── list-members.ts
+│   │       ├── create-invitation.ts
+│   │       └── revoke-invitation.ts
+│   ├── invitations/                 # Public & invitee token resolution gateway
+│   │   ├── invitations.routes.ts
+│   │   └── handlers/
+│   │       ├── resolve-invitation.ts # GET /:invitationId?token=...
+│   │       └── update-status.ts      # PATCH /:invitationId ({ status, token })
+│   ├── users/                       # User profile & personal context
+│   │   ├── users.routes.ts
+│   │   └── handlers/
+│   │       ├── get-me.ts             # GET /me
+│   │       ├── list-my-tenants.ts    # GET /me/tenants
+│   │       ├── list-notifications.ts # GET /me/notifications (Smart polling)
+│   │       └── mark-read.ts          # PATCH /me/notifications/:id/read
+│   ├── platform/                    # Platform superadmin oversight
+│   │   ├── platform.routes.ts
+│   │   └── handlers/
+│   │       ├── list-all-tenants.ts
+│   │       └── set-tenant-status.ts
+│   └── storage/                     # S3 presigned asset upload & preview
+│       ├── storage.routes.ts
+│       └── handlers/
+│           ├── upload-url.ts
+│           └── preview-url.ts
+├── middleware/                      # Shared middleware (Auth, TenantContext, Permissions)
+└── index.ts                         # Root application assembling all module routers
+```
+
+### B. One-File-Per-Handler Pattern
+
+To prevent the monolithic "God Service" anti-pattern (multi-thousand line service files bundling dozens of unrelated operations):
+
+1. **Dedicated Operation Files**: Each HTTP operation lives in its own dedicated file under `handlers/<operation>.ts` authored via Hono's `createFactory().createHandlers()`.
+2. **Single Responsibility**: Every handler focuses strictly on its operation's input validation, authorization, atomic database transactions, error handling, and response serialization without artificial line limits.
+3. **No Monolithic Service Classes**: Shared domain actions (e.g. background worker tasks or cross-module logic) are authored as focused, single-purpose functions in `services/` or `actions/` alongside handlers, never monolithic multi-thousand LOC classes.
+4. **Declarative Route Files**: `*.routes.ts` files act purely as a concise table of contents mapping HTTP verbs and paths to imported handlers.
+
+### C. Explicit RESTful Resource Scopes
+
+The API follows explicit, predictable RESTful resource hierarchies:
+
+- **Store / Tenant Management**: Explicitly nested under `/api/v1/tenants/:tenantId/...` (e.g. `/tenants/:tenantId/members`, `/tenants/:tenantId/invitations`).
+- **Public Invitee Gateway**: `/api/v1/invitations/:invitationId` (`GET` to preview invitation with `?token=...`, `PATCH` to update status `{ status: "accepted" | "rejected", token }`).
+- **User Personal Scope**: `/api/v1/users/me/...` (current user profile, personal notifications, preferences).
+- **Platform Governance**: `/api/v1/platform/...` (superadmin tenant oversight, BullMQ queues).
+- **Better Auth Engine**: Mounted under `/api/v1/auth/*`.
+
+### D. Type-Safe Hono RPC & Zero-Route-Dictionary Invariant
+
+All domain routers chain into the root app under `/api/v1` and export the unified type `AppType`:
+
+```ts
+const routes = app
+  .basePath("/api/v1")
+  .route("/tenants", tenantsRouter)
+  .route("/invitations", invitationsRouter)
+  .route("/users", usersRouter)
+  .route("/storage", storageRouter);
+
+export type AppType = typeof routes;
+```
+
+1. **Zero Manual API Route Dictionaries**: The monorepo strictly bans manual backend API route dictionaries. The frontend client `apiClient = hc<AppType>(...)` automatically infers every route, HTTP verb, URL parameter, query parameter, request body, and response payload directly from the TypeScript AST.
+2. **Frontend Page Routes Only**: `packages/types/src/routes/catalog.ts` is strictly reserved for Next.js frontend UI page navigation routes (`<Link href="...">`), never backend API endpoints.
+3. **Shared Request Validation**: All request input schemas (`json`, `query`, `param`) are authored once in `@hono-commerce/types` and shared between backend `zValidator` and frontend `react-hook-form`.
+4. **Response Type Inference (ADR-005)**: Consumers infer response types directly via `InferResponseType<typeof api.[domain].[endpoint].$[method], 200>`.
+5. **Client Export Standard (`api = client.api.v1`)**: To eliminate repetitive `.api.v1` typing across the frontend, `api-client.ts` in consuming applications exports `export const api = client.api.v1;`. Call sites call `api.tenants...`, `api.invitations...`, and `api.users...` directly while preserving 100% full type safety and compiler autocompletion.
+
+### E. S3 Storage Security & Multi-Tenant Isolation
+
+1. **Authentication & Membership Enforcement**:
+   - Both `/api/v1/storage/upload-url` and `/api/v1/storage/preview-url` require authenticated sessions via `requireAuth()`.
+   - Uploads into `tenants/{tenantId}/...` verify that the caller is an active member of that tenant (`tenantMember.status === "active"`).
+   - Sensitive categories (`kyc`, `documents`) are restricted strictly to store `owner` roles.
+2. **Path Namespace & Key Traversal Protection**:
+   - Preview requests enforce that `s3Key` strictly starts with `tenants/{authorizedTenantId}/`.
+   - Cross-tenant reads and arbitrary S3 key generation are rejected with `403 FORBIDDEN`.
+3. **Signed Expiry Bounds**:
+   - Pre-signed read and upload expiration times are strictly capped at 3,600 seconds (1 hour).
+
+---
+
 ## 9. Complete Database Schema Blueprint (Drizzle ORM)
+
+All primary keys use native PostgreSQL `uuid("id").primaryKey().defaultRandom()` to guarantee cryptographic randomness and zero JS-server ID generation locks. All enum columns use PostgreSQL native `pgEnum` as the single source of truth.
 
 ```ts
 import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
   pgTable,
   text,
   timestamp,
-  boolean,
-  integer,
-  jsonb,
   uniqueIndex,
-  index,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 // ==========================================
-// 1. TENANTS & MULTI-TENANCY
+// 1. ENUMS (SINGLE SOURCE OF TRUTH)
+// ==========================================
+export const userRoleEnum = pgEnum("user_role", ["admin", "staff", "customer"]);
+export const userStatusEnum = pgEnum("user_status", [
+  "active",
+  "suspended",
+  "deactivated",
+]);
+export const tenantStatusEnum = pgEnum("tenant_status", [
+  "active",
+  "suspended",
+  "maintenance",
+]);
+export const tenantMemberRoleEnum = pgEnum("tenant_member_role", [
+  "owner",
+  "member",
+]);
+export const tenantMemberStatusEnum = pgEnum("tenant_member_status", [
+  "active",
+  "suspended",
+]);
+export const tenantInvitationStatusEnum = pgEnum("tenant_invitation_status", [
+  "pending",
+  "accepted",
+  "rejected",
+  "canceled",
+]);
+
+// ==========================================
+// 2. AUTH & ACCOUNTS
+// ==========================================
+export const user = pgTable("user", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  role: userRoleEnum("role").default("customer").notNull(),
+  status: userStatusEnum("status").default("active").notNull(),
+  banned: boolean("banned").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// ==========================================
+// 3. TENANTS & MULTI-TENANCY
 // ==========================================
 export const tenant = pgTable("tenant", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  logo: text("logo"),
   customDomain: text("custom_domain").unique(),
   stripeConnectAccountId: text("stripe_connect_account_id").unique(),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionPlan: text("subscription_plan").default("starter").notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
+  status: tenantStatusEnum("status").default("active").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
-// ==========================================
-// 2. TENANT MEMBERS & RBAC
-// ==========================================
 export const tenantMember = pgTable(
   "tenant_member",
   {
-    id: text("id").primaryKey(),
-    tenantId: text("tenant_id")
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
       .notNull()
       .references(() => tenant.id, { onDelete: "cascade" }),
-    userId: text("user_id").notNull(),
-    role: text("role", { enum: ["owner", "member"] })
-      .default("member")
-      .notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: tenantMemberRoleEnum("role").default("member").notNull(),
+    status: tenantMemberStatusEnum("status").default("active").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
   (table) => [uniqueIndex("tenant_user_idx").on(table.tenantId, table.userId)],
 );
 
-export const tenantRoleGroup = pgTable("tenant_role_group", {
-  id: text("id").primaryKey(),
-  tenantId: text("tenant_id").references(() => tenant.id, {
-    onDelete: "cascade",
-  }), // null = system default
-  name: text("name").notNull(),
-  description: text("description"),
-  isDefault: boolean("is_default").default(false).notNull(),
-});
-
-export const roleGroupPermission = pgTable(
-  "role_group_permission",
+export const tenantInvitation = pgTable(
+  "tenant_invitation",
   {
-    id: text("id").primaryKey(),
-    roleGroupId: text("role_group_id")
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
       .notNull()
-      .references(() => tenantRoleGroup.id, { onDelete: "cascade" }),
-    permission: text("permission").notNull(),
+      .references(() => tenant.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: tenantMemberRoleEnum("role").default("member").notNull(),
+    status: tenantInvitationStatusEnum("status").default("pending").notNull(),
+    inviterId: uuid("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
   (table) => [
-    uniqueIndex("role_group_perm_idx").on(table.roleGroupId, table.permission),
-  ],
-);
-
-export const memberRoleGroup = pgTable(
-  "member_role_group",
-  {
-    id: text("id").primaryKey(),
-    memberId: text("member_id")
-      .notNull()
-      .references(() => tenantMember.id, { onDelete: "cascade" }),
-    roleGroupId: text("role_group_id")
-      .notNull()
-      .references(() => tenantRoleGroup.id, { onDelete: "cascade" }),
-  },
-  (table) => [
-    uniqueIndex("member_role_group_idx").on(table.memberId, table.roleGroupId),
-  ],
-);
-
-export const memberPermissionOverride = pgTable(
-  "member_permission_override",
-  {
-    id: text("id").primaryKey(),
-    memberId: text("member_id")
-      .notNull()
-      .references(() => tenantMember.id, { onDelete: "cascade" }),
-    permission: text("permission").notNull(),
-    isGranted: boolean("is_granted").notNull(),
-  },
-  (table) => [
-    uniqueIndex("member_override_perm_idx").on(
-      table.memberId,
-      table.permission,
+    index("tenant_invitation_tenant_idx").on(table.tenantId),
+    index("tenant_invitation_email_idx").on(table.email),
+    index("tenant_invitation_lookup_idx").on(
+      table.tenantId,
+      table.email,
+      table.status,
     ),
+  ],
+);
+
+// ==========================================
+// 4. NOTIFICATIONS (PER-RECIPIENT FAN-OUT)
+// ==========================================
+export const notification = pgTable(
+  "notification",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => user.id, { onDelete: "cascade" }),
+    tenantId: uuid("tenant_id").references(() => tenant.id, {
+      onDelete: "cascade",
+    }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    actionUrl: text("action_url"),
+    metadata:
+      jsonb("metadata").$type<
+        Record<string, string | number | boolean | null>
+      >(),
+    isRead: boolean("is_read").default(false).notNull(),
+    readAt: timestamp("read_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("notification_user_unread_idx").on(
+      table.userId,
+      table.isRead,
+      table.createdAt,
+    ),
+    index("notification_tenant_idx").on(table.tenantId, table.createdAt),
   ],
 );
 

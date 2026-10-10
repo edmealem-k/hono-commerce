@@ -8,7 +8,8 @@ This document contains mandatory architectural, database, backend API, and event
 
 - **`apps/`**:
   - `apps/storefront`: Public storefront & customer portal (Next.js 16 App Router).
-  - `apps/dashboard`: Store management (`/(tenant)`) and superadmin (`/(admin)`) portals (Next.js 16).
+  - `apps/dashboard`: Store management (`/(tenant)`), superadmin (`/(admin)`), and public auth/invitation (`/(public)`) portals (Next.js 16).
+
   - `apps/api`: Core backend API server (Hono on Bun).
   - `apps/realtime`: Dedicated real-time WebSocket server (Socket.io + Redis Pub/Sub).
   - `apps/worker`: Background job consumer (BullMQ + Redis).
@@ -27,7 +28,7 @@ This document contains mandatory architectural, database, backend API, and event
 ## 2. Database Schema & Migration Rules (`packages/db`)
 
 - **Multi-Tenant Isolation Invariant**:
-  - Every tenant-scoped entity MUST include a `tenantId: text("tenant_id").notNull().references(() => tenant.id, { onDelete: "cascade" })`.
+  - Every tenant-scoped entity MUST include a `tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "cascade" })`.
   - Create composite indexes on `(tenant_id, ...)` for all filtered query paths (e.g. `uniqueIndex("product_slug_tenant_idx").on(table.tenantId, table.slug)`).
 - **Naming Conventions**:
   - Database columns: `snake_case` (e.g. `price_in_cents`, `created_at`, `is_published`).
@@ -36,38 +37,62 @@ This document contains mandatory architectural, database, backend API, and event
   - All persistent domain tables must include `createdAt` (`defaultNow()`) and `updatedAt` (`$onUpdate(() => new Date())`).
 - **Money & Quantities**:
   - Store all monetary amounts as **integers in cents** (e.g. `priceInCents: integer("price_in_cents")`) to avoid floating-point errors.
-- **Migrations**:
-  - Generate migrations via `bun run db:generate` (or `turbo run db:generate`).
-  - Apply migrations via `bun run db:migrate`.
+- **Strict Human-Only Migration Management Invariant**:
+  - AI agents MUST NEVER generate, edit, delete, push, or run database migrations (`bun run db:generate`, `bun run db:migrate`, `bun run db:push`, `drizzle-kit generate`, etc.).
+  - AI agents are strictly limited to authoring and editing Drizzle TypeScript schema definitions (`packages/db/src/schema/*.ts`).
+  - Generating SQL migrations, inspecting diffs, and applying migrations to the database requires human involvement and developer execution.
   - Never commit raw untested manual SQL edits that diverge from Drizzle schema definitions.
 
 ---
 
-## 3. Backend & API Design Rules (`apps/server`)
+## 3. Backend & API Design Rules (`apps/api`)
 
-- **Route Organization & Versioning**:
-  - Mount all business domain routes under `/api/v1` (e.g. `/api/v1/products`, `/api/v1/orders`, `/api/v1/tenants`).
-  - Mount Better Auth handlers under `/api/v1/auth/*`.
-- **Type-Safe RPC Export**:
-  - Chain routes with Hono's route builder and export the consolidated route type:
+- **Vertical Slice & Modular Domain Architecture (`apps/api/src/modules/<domain>/`)**:
+  - Organize all business domains into dedicated modules under `apps/api/src/modules/<domain>/` (e.g. `tenants/`, `invitations/`, `notifications/`, `users/`, `storage/`).
+  - **One-File-Per-Handler Pattern**:
+    - Each HTTP operation/endpoint lives in its own dedicated file under `modules/<domain>/handlers/<operation>.ts` (e.g. `handlers/update-status.ts`, `handlers/resolve-invitation.ts`).
+    - Handlers are authored using Hono's `createFactory().createHandlers(zValidator(...), async (c) => ...)`.
+    - Every handler file has single responsibility for its specific HTTP operation. Focus on modular clarity, self-contained error handling, and business logic cohesion without imposing artificial line limits.
+    - **No Monolithic Service Anti-Pattern**: Never create fat 1,000+ line service files that bundle dozens of unrelated operations. Complex business logic or actions reused by background workers should be authored as focused, single-purpose functions in `actions/` or `services/` alongside handlers.
+  - **Declarative Router Index (`*.routes.ts`)**:
+    - Each module exposes a clean `*.routes.ts` file that strictly maps HTTP verbs and route paths to imported handlers:
+      ```ts
+      export const invitationsRouter = new Hono()
+        .get("/:invitationId", ...resolveInvitationHandler)
+        .patch("/:invitationId", ...updateInvitationStatusHandler);
+      ```
+- **Explicit RESTful Resource & Nested Scopes**:
+  - **Store / Tenant Management**: Explicitly nested under `/api/v1/tenants/:tenantId/...` (e.g. `/tenants/:tenantId/members`, `/tenants/:tenantId/invitations`).
+  - **Public Invitee Gateway**: `/api/v1/invitations/:invitationId` (`GET` to preview invitation with `?token=...`, `PATCH` to update status `{ status: "accepted" | "rejected", token }`).
+  - **User Personal Scope**: `/api/v1/users/me/...` (current user profile, personal notifications, preferences).
+  - **Better Auth Handlers**: Mounted under `/api/v1/auth/*`.
+  - **Platform Governance**: Mounted under `/api/v1/platform/...` (superadmin tenant oversight, BullMQ queues).
+- **Type-Safe RPC Export & Zero-Route-Dictionary Invariant**:
+  - Chain all domain routers into the root app under `/api/v1` and export the unified type:
     ```ts
     const routes = app
       .basePath("/api/v1")
-      .route("/products", productsRouter)
-      .route("/orders", ordersRouter);
+      .route("/tenants", tenantsRouter)
+      .route("/invitations", invitationsRouter)
+      .route("/users", usersRouter)
+      .route("/storage", storageRouter);
 
     export type AppType = typeof routes;
     ```
+  - **Zero Manual API Route Dictionaries**: Never author or maintain manual backend API route dictionaries (e.g. `routes.api = { ... }`). `apiClient = hc<AppType>(...)` automatically infers the complete callable API tree, methods, URL parameters, query parameters, request bodies, and return types directly from the backend TypeScript AST.
+  - `packages/types/src/routes/catalog.ts` is strictly reserved for **frontend UI page routes** (Next.js App Router paths for `<Link href="...">` navigation), never backend API endpoints.
+  - **Client Shorthand Export Standard (`api = client.api.v1`)**: To eliminate repetitive `.api.v1` typing across the frontend, consuming applications export `export const api = client.api.v1;` from `@/lib/api-client`. Call sites invoke `api.tenants...`, `api.invitations...`, and `api.users...` directly while maintaining 100% full type safety and compiler autocompletion.
 - **Hono RPC Response Type Inference (ADR-005)**:
-  - Frontend applications and consumers MUST infer response payloads directly from Hono endpoints using `InferResponseType<typeof apiClient.api.v1.[domain].$get, 200>` (from `hono/client`).
+  - Frontend applications and consumers MUST infer response payloads directly from Hono endpoints using `InferResponseType<typeof api.[domain].$get, 200>` (from `hono/client`).
+
   - Never declare redundant, manual response DTOs or response schemas in `@hono-commerce/types`.
-- **Request Validation**:
-  - Validate all request inputs (`json`, `query`, `param`) using `zod` schemas via `@hono/zod-validator` (`zValidator`).
-  - Shared request input schemas live in `@hono-commerce/types`.
+- **Request Validation & Shared Schemas**:
+  - Validate all request inputs (`json`, `query`, `param`) using Zod schemas via `@hono/zod-validator` (`zValidator`).
+  - Shared request input schemas are authored **once** in `@hono-commerce/types` (`packages/types/src/schemas/<domain>.ts`) and reused directly across backend `zValidator` and frontend `react-hook-form` / `zodResolver`.
 - **Data Isolation**:
-  - Every tenant API endpoint must extract `tenantId` from the authenticated session or verified hostname and filter database queries with `where(eq(table.tenantId, tenantId))`.
+  - Every tenant API endpoint must extract `tenantId` from URL params or verified hostname and filter database queries with `where(eq(table.tenantId, tenantId))`.
 - **Standardized JSON Response Shape**:
-  - Success: Return typed payload (e.g. `c.json({ data: items })` or `c.json({ success: true })`).
+  - Success: Return typed payload (e.g. `c.json({ data: items }, 200)` or `c.json({ success: true }, 200)`).
   - Errors: Return structured error format with appropriate HTTP status codes (e.g. `c.json({ error: "Product not found", code: "NOT_FOUND" }, 404)`).
 
 ---
@@ -222,3 +247,7 @@ High-level reusable modules used across `storefront` and `dashboard`:
     - All UI components, pages, forms, and views across `apps/dashboard`, `apps/storefront`, and `@hono-commerce/ui` must strictly follow [`packages/ui/DESIGN.md`](file:///home/edmealem.k/Downloads/hono-commerce/packages/ui/DESIGN.md).
     - Never use arbitrary raw hex colors or inline style overrides; always leverage semantic Tailwind v4 tokens from `globals.css`.
     - Implement the mandatory 6-state matrix (Initial, Loading, Success, Empty, Error, Expired) for every interactive feature and form to guarantee zero layout shifts and seamless user feedback.
+12. **Strict Human-Only Migration Management Invariant**:
+    - AI agents MUST NEVER create, edit, delete, push, or execute database migration files (`bun run db:migrate`, `bun run db:push`, etc.).
+    - AI agents are strictly limited to authoring and updating Drizzle TypeScript schema definitions (`packages/db/src/schema/*.ts`).
+    - Generating SQL migration files, reviewing diffs, and applying migrations to the database requires human involvement and developer execution.

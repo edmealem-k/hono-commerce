@@ -13,3 +13,5 @@ export const apiClient = hc<AppType>(getServerUrl(env.NEXT_PUBLIC_SERVER_URL), {
     });
   },
 });
+
+export const api = apiClient.api.v1;

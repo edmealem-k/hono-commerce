@@ -1,15 +1,17 @@
+import { enqueueNotificationFanout } from "@hono-commerce/queue";
+
 import { sendEmailNotification } from "./channels/email";
 import { sendInAppNotification } from "./channels/in-app";
 import { sendPushNotification } from "./channels/push";
 
 import type {
-  UserNotificationType,
-  TenantNotificationType,
-  SystemNotificationType,
-  UserNotificationPayload,
-  TenantNotificationPayload,
-  SystemNotificationPayload,
   NotificationChannelOptions,
+  SystemNotificationPayload,
+  SystemNotificationType,
+  TenantNotificationPayload,
+  TenantNotificationType,
+  UserNotificationPayload,
+  UserNotificationType,
 } from "./types";
 
 const DEFAULT_CHANNELS: NotificationChannelOptions = {
@@ -30,7 +32,8 @@ export async function notifyUser(
   if (channels.inApp) {
     promises.push(
       sendInAppNotification({
-        recipientId: payload.userId,
+        userId: payload.userId,
+        type: _type,
         data: payload.data,
       }),
     );
@@ -73,19 +76,41 @@ export async function notifyTenant(
 ): Promise<{ success: boolean; results: PromiseSettledResult<boolean>[] }> {
   const channels = { ...DEFAULT_CHANNELS, ...channelOptions };
   const promises: Promise<boolean>[] = [];
+  const idempotencyKey =
+    payload.idempotencyKey ||
+    channelOptions?.idempotencyKey ||
+    crypto.randomUUID();
 
-  if (channels.inApp) {
+  if (channels.inApp || channels.email) {
     promises.push(
-      sendInAppNotification({
-        recipientId: `tenant:${payload.tenantId}`,
-        data: payload.data,
-      }),
+      enqueueNotificationFanout(
+        {
+          jobType: "tenant-notifications-fanout",
+          tenantId: payload.tenantId,
+          type: _type,
+          targetRoles: payload.targetRoles,
+          title: payload.data.title,
+          message: payload.data.message,
+          actionUrl: payload.data.actionUrl,
+          metadata: payload.data.metadata,
+          idempotencyKey,
+          channels: {
+            inApp: channels.inApp,
+            email: channels.email,
+          },
+        },
+        { jobId: idempotencyKey },
+      )
+        .then(() => true)
+        .catch((err) => {
+          console.error(
+            "[Notification] Failed to enqueue tenant fanout job:",
+            err,
+          );
+          return false;
+        }),
     );
   }
-
-  // TODO(auth-schema): Once tenant_member DB schema is implemented:
-  // If channels.email or channels.push is requested, enqueue a tenant-notifications-fanout
-  // job in apps/worker to query members matching payload.targetRoles and dispatch per-user.
 
   const results = await Promise.allSettled(promises);
   const anySuccessful = results.some(
@@ -106,24 +131,48 @@ export async function notifySystem(
   const channels = {
     inApp: true,
     email: false,
-    push: false,
     sms: false,
     ...channelOptions,
   };
   const promises: Promise<boolean>[] = [];
+  const idempotencyKey =
+    payload.idempotencyKey ||
+    channelOptions?.idempotencyKey ||
+    crypto.randomUUID();
 
-  if (channels.inApp) {
+  if (channels.inApp || channels.email) {
     promises.push(
-      sendInAppNotification({
-        recipientId: "system:admin",
-        data: payload.data,
-      }),
+      enqueueNotificationFanout(
+        {
+          jobType: "system-notifications-fanout",
+          type: _type,
+          systemRoles: payload.systemRoles as (
+            | "admin"
+            | "staff"
+            | "customer"
+          )[],
+          title: payload.data.title,
+          message: payload.data.message,
+          actionUrl: payload.data.actionUrl,
+          metadata: payload.data.metadata,
+          idempotencyKey,
+          channels: {
+            inApp: channels.inApp,
+            email: channels.email,
+          },
+        },
+        { jobId: idempotencyKey },
+      )
+        .then(() => true)
+        .catch((err) => {
+          console.error(
+            "[Notification] Failed to enqueue system fanout job:",
+            err,
+          );
+          return false;
+        }),
     );
   }
-
-  // TODO(auth-schema): Once platform user roles DB schema is implemented:
-  // If channels.email or channels.push is requested, enqueue a system-notifications-fanout
-  // job in apps/worker to query platform users matching payload.systemRoles and dispatch per-user.
 
   const results = await Promise.allSettled(promises);
   const anySuccessful = results.some(

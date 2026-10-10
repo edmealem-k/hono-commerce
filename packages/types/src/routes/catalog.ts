@@ -1,9 +1,9 @@
 export const routes = {
-  auth: {
-    login: "/login",
-    register: "/register",
-    forgotPassword: "/forgot-password",
-    resetPassword: "/reset-password",
+  public: {
+    signIn: "/sign-in",
+    verify: "/verify",
+    invitation: ({ invitationId }: { invitationId: string }) =>
+      `/invitations/${invitationId}`,
   },
   admin: {
     root: "/",
@@ -44,13 +44,6 @@ export const routes = {
     accountOrders: "/account/orders",
     accountOrder: ({ orderId }: { orderId: string }) =>
       `/account/orders/${orderId}`,
-  },
-  api: {
-    health: "/api/v1/health",
-    auth: "/api/v1/auth",
-    storageUpload: "/api/v1/storage/upload-url",
-    storagePreview: "/api/v1/storage/preview-url",
-    webhooksStripe: "/api/v1/webhooks/stripe",
   },
 } as const;
 
