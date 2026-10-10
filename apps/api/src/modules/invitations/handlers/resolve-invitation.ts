@@ -6,14 +6,16 @@ import {
   invitationParamSchema,
   resolveInvitationQuerySchema,
 } from "@hono-commerce/types";
-import { zValidator } from "@hono/zod-validator";
 import { createFactory } from "hono/factory";
+
+import { fail, ok } from "../../../lib/response";
+import { validated } from "../../../lib/validation";
 
 const factory = createFactory();
 
 export const resolveInvitationHandler = factory.createHandlers(
-  zValidator("param", invitationParamSchema),
-  zValidator("query", resolveInvitationQuerySchema),
+  validated("param", invitationParamSchema),
+  validated("query", resolveInvitationQuerySchema),
   async (c) => {
     const { invitationId } = c.req.valid("param");
     const { token } = c.req.valid("query");
@@ -21,20 +23,20 @@ export const resolveInvitationHandler = factory.createHandlers(
     const verifyResult = await verifyJwt(token, "invitation");
     if (!verifyResult.success) {
       return c.json(
-        {
+        fail({
           error: "Invalid or expired invitation token",
           code: verifyResult.error,
-        },
+        }),
         400,
       );
     }
 
     if (verifyResult.payload.invitationId !== invitationId) {
       return c.json(
-        {
+        fail({
           error: "Invitation token does not match the requested invitation",
           code: "TOKEN_MISMATCH",
-        },
+        }),
         400,
       );
     }
@@ -47,10 +49,10 @@ export const resolveInvitationHandler = factory.createHandlers(
 
     if (!invitationRecord) {
       return c.json(
-        {
+        fail({
           error: "Invitation not found",
           code: "NOT_FOUND",
-        },
+        }),
         404,
       );
     }
@@ -65,21 +67,20 @@ export const resolveInvitationHandler = factory.createHandlers(
         invitationRecord.inviterId !== verifyResult.payload.inviterId)
     ) {
       return c.json(
-        {
+        fail({
           error: "Invitation token claims do not match database record",
           code: "TOKEN_CLAIM_MISMATCH",
-        },
+        }),
         400,
       );
     }
 
     if (invitationRecord.status !== "pending") {
       return c.json(
-        {
+        fail({
           error: `Invitation has already been ${invitationRecord.status}`,
           code: "INVITATION_ALREADY_RESOLVED",
-          status: invitationRecord.status,
-        },
+        }),
         409,
       );
     }
@@ -110,7 +111,7 @@ export const resolveInvitationHandler = factory.createHandlers(
       : [undefined];
 
     return c.json(
-      {
+      ok({
         data: {
           id: invitationRecord.id,
           email: invitationRecord.email,
@@ -131,7 +132,7 @@ export const resolveInvitationHandler = factory.createHandlers(
             image: null,
           },
         },
-      },
+      }),
       200,
     );
   },

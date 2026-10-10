@@ -1,15 +1,17 @@
 import { db, desc, eq } from "@hono-commerce/db";
 import { tenantInvitation } from "@hono-commerce/db/schema/tenant";
 import { tenantParamSchema } from "@hono-commerce/types";
-import { zValidator } from "@hono/zod-validator";
 import { createFactory } from "hono/factory";
+
+import { ok } from "../../../lib/response";
+import { validated } from "../../../lib/validation";
 
 import type { TenantEnv } from "../../../types/auth";
 
 const factory = createFactory<TenantEnv>();
 
 export const listInvitationsHandler = factory.createHandlers(
-  zValidator("param", tenantParamSchema),
+  validated("param", tenantParamSchema),
   async (c) => {
     const tenantContext = c.get("tenant");
 
@@ -28,9 +30,9 @@ export const listInvitationsHandler = factory.createHandlers(
       .orderBy(desc(tenantInvitation.createdAt));
 
     return c.json(
-      {
+      ok({
         data: invitations,
-      },
+      }),
       200,
     );
   },

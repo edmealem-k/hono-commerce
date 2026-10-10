@@ -1,5 +1,7 @@
 import { hasPermission } from "@hono-commerce/auth/permissions";
 
+import { fail } from "../response";
+
 import type { SessionUser, TenantContext } from "../../types/auth";
 import type { Context, Next } from "hono";
 
@@ -17,10 +19,10 @@ export function requirePermission(permission: string) {
 
     if (!user) {
       return c.json(
-        {
+        fail({
           error: "Authentication required",
           code: "UNAUTHORIZED",
-        },
+        }),
         401,
       );
     }
@@ -48,10 +50,10 @@ export function requirePermission(permission: string) {
 
     if (!allowed) {
       return c.json(
-        {
+        fail({
           error: `Forbidden: missing permission '${permission}'`,
           code: "FORBIDDEN",
-        },
+        }),
         403,
       );
     }

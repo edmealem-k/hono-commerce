@@ -1,15 +1,16 @@
 import { and, db, eq } from "@hono-commerce/db";
 import { tenantMember } from "@hono-commerce/db/schema/tenant";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 
 import { requireAuth } from "../lib/auth/require-auth";
+import { fail, ok } from "../lib/response";
 import { generateTenantS3Key } from "../lib/s3/s3-key";
 import {
   getReadSignedUrl,
   getUploadPresignedUrl,
 } from "../lib/s3/s3-signed-url";
+import { validated } from "../lib/validation";
 
 import type { AuthEnv } from "../types/auth";
 
@@ -43,7 +44,7 @@ const previewUrlSchema = z.object({
 
 export const storageRouter = new Hono<AuthEnv>()
   .use("*", requireAuth())
-  .post("/upload-url", zValidator("json", uploadUrlSchema), async (c) => {
+  .post("/upload-url", validated("json", uploadUrlSchema), async (c) => {
     const user = c.get("user");
     const { category, fileName, contentType, tenantId } = c.req.valid("json");
 
@@ -63,10 +64,10 @@ export const storageRouter = new Hono<AuthEnv>()
 
       if (!membership) {
         return c.json(
-          {
+          fail({
             error: "Forbidden: You are not an active member of this store",
             code: "FORBIDDEN",
-          },
+          }),
           403,
         );
       }
@@ -77,11 +78,11 @@ export const storageRouter = new Hono<AuthEnv>()
         membership.role !== "owner"
       ) {
         return c.json(
-          {
+          fail({
             error:
               "Forbidden: Only store owners may upload KYC or legal documents",
             code: "FORBIDDEN",
-          },
+          }),
           403,
         );
       }
@@ -100,17 +101,17 @@ export const storageRouter = new Hono<AuthEnv>()
 
     if (!result) {
       return c.json(
-        {
+        fail({
           error: "Failed to generate presigned upload URL",
           code: "STORAGE_ERROR",
-        },
+        }),
         500,
       );
     }
 
-    return c.json({ data: result });
+    return c.json(ok({ data: result }), 200);
   })
-  .get("/preview-url", zValidator("query", previewUrlSchema), async (c) => {
+  .get("/preview-url", validated("query", previewUrlSchema), async (c) => {
     const user = c.get("user");
     const { s3Key, expiresIn } = c.req.valid("query");
 
@@ -126,10 +127,10 @@ export const storageRouter = new Hono<AuthEnv>()
       // Non-tenant files (e.g. platform assets) require platform admin
       if (user.role !== "admin") {
         return c.json(
-          {
+          fail({
             error: "Forbidden: Invalid file path or unauthorized tenant scope",
             code: "FORBIDDEN",
-          },
+          }),
           403,
         );
       }
@@ -150,10 +151,10 @@ export const storageRouter = new Hono<AuthEnv>()
 
         if (!membership) {
           return c.json(
-            {
+            fail({
               error: "Forbidden: You do not have access to this store's files",
               code: "FORBIDDEN",
-            },
+            }),
             403,
           );
         }
@@ -164,11 +165,11 @@ export const storageRouter = new Hono<AuthEnv>()
           membership.role !== "owner"
         ) {
           return c.json(
-            {
+            fail({
               error:
                 "Forbidden: Only store owners may view KYC or legal documents",
               code: "FORBIDDEN",
-            },
+            }),
             403,
           );
         }
@@ -180,10 +181,13 @@ export const storageRouter = new Hono<AuthEnv>()
 
     if (!signedUrl) {
       return c.json(
-        { error: "Failed to generate read signed URL", code: "NOT_FOUND" },
+        fail({
+          error: "Failed to generate read signed URL",
+          code: "NOT_FOUND",
+        }),
         404,
       );
     }
 
-    return c.json({ data: { url: signedUrl, s3Key } });
+    return c.json(ok({ data: { url: signedUrl, s3Key } }), 200);
   });

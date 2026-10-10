@@ -11,16 +11,18 @@ import {
   createInvitationSchema,
   tenantParamSchema,
 } from "@hono-commerce/types";
-import { zValidator } from "@hono/zod-validator";
 import { createFactory } from "hono/factory";
+
+import { fail, ok } from "../../../lib/response";
+import { validated } from "../../../lib/validation";
 
 import type { TenantEnv } from "../../../types/auth";
 
 const factory = createFactory<TenantEnv>();
 
 export const createInvitationHandler = factory.createHandlers(
-  zValidator("param", tenantParamSchema),
-  zValidator("json", createInvitationSchema),
+  validated("param", tenantParamSchema),
+  validated("json", createInvitationSchema),
   async (c) => {
     const { email, role } = c.req.valid("json");
     const caller = c.get("user");
@@ -30,10 +32,10 @@ export const createInvitationHandler = factory.createHandlers(
 
     if (normalizedEmail === caller.email.toLowerCase().trim()) {
       return c.json(
-        {
+        fail({
           error: "You cannot invite yourself",
           code: "SELF_INVITE",
-        },
+        }),
         400,
       );
     }
@@ -59,10 +61,10 @@ export const createInvitationHandler = factory.createHandlers(
 
       if (existingMember && existingMember.status === "active") {
         return c.json(
-          {
+          fail({
             error: "User is already an active member of this store",
             code: "ALREADY_MEMBER",
-          },
+          }),
           409,
         );
       }
@@ -83,10 +85,10 @@ export const createInvitationHandler = factory.createHandlers(
 
     if (existingPending) {
       return c.json(
-        {
+        fail({
           error: "A pending invitation already exists for this email",
           code: "INVITATION_PENDING",
-        },
+        }),
         409,
       );
     }
@@ -105,10 +107,10 @@ export const createInvitationHandler = factory.createHandlers(
 
     if (!invitation) {
       return c.json(
-        {
+        fail({
           error: "Failed to create invitation",
           code: "CREATION_FAILED",
-        },
+        }),
         500,
       );
     }
@@ -152,7 +154,7 @@ export const createInvitationHandler = factory.createHandlers(
     }
 
     return c.json(
-      {
+      ok({
         data: {
           id: invitation.id,
           email: invitation.email,
@@ -160,7 +162,8 @@ export const createInvitationHandler = factory.createHandlers(
           status: invitation.status,
           createdAt: invitation.createdAt,
         },
-      },
+        message: "Invitation sent successfully",
+      }),
       201,
     );
   },

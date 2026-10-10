@@ -4,15 +4,17 @@ import { tenantInvitation } from "@hono-commerce/db/schema/tenant";
 import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
 import { cancelInvitationParamSchema } from "@hono-commerce/types";
-import { zValidator } from "@hono/zod-validator";
 import { createFactory } from "hono/factory";
+
+import { fail, ok } from "../../../lib/response";
+import { validated } from "../../../lib/validation";
 
 import type { TenantEnv } from "../../../types/auth";
 
 const factory = createFactory<TenantEnv>();
 
 export const resendInvitationHandler = factory.createHandlers(
-  zValidator("param", cancelInvitationParamSchema),
+  validated("param", cancelInvitationParamSchema),
   async (c) => {
     const { invitationId } = c.req.valid("param");
     const caller = c.get("user");
@@ -31,20 +33,20 @@ export const resendInvitationHandler = factory.createHandlers(
 
     if (!existing) {
       return c.json(
-        {
+        fail({
           error: "Invitation not found",
           code: "NOT_FOUND",
-        },
+        }),
         404,
       );
     }
 
     if (existing.status !== "pending") {
       return c.json(
-        {
+        fail({
           error: `Cannot resend invitation with status '${existing.status}'`,
           code: "INVALID_STATUS",
-        },
+        }),
         409,
       );
     }
@@ -88,10 +90,9 @@ export const resendInvitationHandler = factory.createHandlers(
     }
 
     return c.json(
-      {
-        success: true,
+      ok({
         message: "Invitation resent successfully",
-      },
+      }),
       200,
     );
   },

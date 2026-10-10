@@ -1,6 +1,8 @@
 import { and, db, eq } from "@hono-commerce/db";
 import { tenant, tenantMember } from "@hono-commerce/db/schema/tenant";
 
+import { fail } from "../response";
+
 import type { AuthEnv, TenantContext } from "../../types/auth";
 import type { Context, Next } from "hono";
 
@@ -16,10 +18,10 @@ export function requireTenantContext(paramKey = "tenantId") {
 
     if (!user) {
       return c.json(
-        {
+        fail({
           error: "Authentication required",
           code: "UNAUTHORIZED",
-        },
+        }),
         401,
       );
     }
@@ -31,10 +33,10 @@ export function requireTenantContext(paramKey = "tenantId") {
 
     if (!identifier) {
       return c.json(
-        {
+        fail({
           error: "Tenant identifier required",
           code: "BAD_REQUEST",
-        },
+        }),
         400,
       );
     }
@@ -53,20 +55,20 @@ export function requireTenantContext(paramKey = "tenantId") {
 
     if (!tenantRecord) {
       return c.json(
-        {
+        fail({
           error: "Store not found",
           code: "TENANT_NOT_FOUND",
-        },
+        }),
         404,
       );
     }
 
     if (tenantRecord.status !== "active" && user.role !== "admin") {
       return c.json(
-        {
+        fail({
           error: `Store is currently ${tenantRecord.status}`,
           code: "TENANT_SUSPENDED",
-        },
+        }),
         403,
       );
     }
@@ -100,20 +102,20 @@ export function requireTenantContext(paramKey = "tenantId") {
 
     if (!membership) {
       return c.json(
-        {
+        fail({
           error: "Forbidden: You are not a member of this store",
           code: "FORBIDDEN",
-        },
+        }),
         403,
       );
     }
 
     if (membership.status !== "active") {
       return c.json(
-        {
+        fail({
           error: "Your membership in this store is suspended",
           code: "MEMBERSHIP_SUSPENDED",
-        },
+        }),
         403,
       );
     }

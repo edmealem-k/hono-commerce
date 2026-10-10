@@ -1,5 +1,7 @@
 import { auth } from "@hono-commerce/auth";
 
+import { fail } from "../response";
+
 import type { AuthEnv } from "../../types/auth";
 import type { Context, Next } from "hono";
 
@@ -12,10 +14,10 @@ export function requireAuth() {
 
       if (!session?.user) {
         return c.json(
-          {
+          fail({
             error: "Authentication required",
             code: "UNAUTHORIZED",
-          },
+          }),
           401,
         );
       }
@@ -23,10 +25,10 @@ export function requireAuth() {
       const user = session.user;
       if (user.status !== "active" || user.banned) {
         return c.json(
-          {
+          fail({
             error: "Account is suspended or deactivated",
             code: "ACCOUNT_SUSPENDED",
-          },
+          }),
           403,
         );
       }
@@ -37,10 +39,10 @@ export function requireAuth() {
     } catch (error) {
       console.error("[requireAuth] Error verifying session:", error);
       return c.json(
-        {
+        fail({
           error: "Invalid or expired session",
           code: "UNAUTHORIZED",
-        },
+        }),
         401,
       );
     }

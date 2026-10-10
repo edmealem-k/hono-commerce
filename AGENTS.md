@@ -91,9 +91,14 @@ This document contains mandatory architectural, database, backend API, and event
   - Shared request input schemas are authored **once** in `@hono-commerce/types` (`packages/types/src/schemas/<domain>.ts`) and reused directly across backend `zValidator` and frontend `react-hook-form` / `zodResolver`.
 - **Data Isolation**:
   - Every tenant API endpoint must extract `tenantId` from URL params or verified hostname and filter database queries with `where(eq(table.tenantId, tenantId))`.
-- **Standardized JSON Response Shape**:
-  - Success: Return typed payload (e.g. `c.json({ data: items }, 200)` or `c.json({ success: true }, 200)`).
-  - Errors: Return structured error format with appropriate HTTP status codes (e.g. `c.json({ error: "Product not found", code: "NOT_FOUND" }, 404)`).
+- **Standardized JSON Response Envelope & Discriminated Unions**:
+  - All API routes MUST return standardized envelope payloads using typed helpers from `apps/api/src/lib/response` (`ok`, `paginated`, `fail`) and `packages/types/src/domain/api-response.ts`:
+    - **Resource Success**: `c.json(ok({ data: item, message?: string }), 200)` $\to$ `{ success: true, data: T, message?: string }`.
+    - **Paginated Collection**: `c.json(paginated({ data: items, meta: paginationMeta, message?: string }), 200)` $\to$ `{ success: true, data: T[], meta: PaginationMeta, message?: string }`.
+    - **Action / Mutation Success**: `c.json(ok({ message: "Invitation resent" }), 200)` $\to$ `{ success: true, message: string }`.
+    - **Error / Failure**: `c.json(fail({ error: "Product not found", code: "NOT_FOUND", issues?: ValidationIssue[] }), 404)` $\to$ `{ success: false, error: string, code: string, issues?: ValidationIssue[] }`.
+  - Helpers accept a single named options object (`ok({ data, message })`, `paginated({ data, meta })`, `fail({ error, code })`).
+  - Request validation uses `validated(target, schema)` (wrapping `@hono/zod-validator`) which automatically formats validation errors into `{ success: false, error: "Validation failed", code: "VALIDATION_ERROR", issues }`.
 
 ---
 

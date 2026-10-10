@@ -1,3 +1,5 @@
+import type { PaginationMeta } from "@hono-commerce/types";
+
 export interface PaginationParams {
   page: number;
   limit: number;
@@ -6,13 +8,27 @@ export interface PaginationParams {
 
 export interface PaginatedResult<T> {
   data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
+  pagination: PaginationMeta;
+}
+
+export function buildPaginationMeta({
+  totalCount,
+  page,
+  limit,
+}: {
+  totalCount: number;
+  page: number;
+  limit: number;
+}): PaginationMeta {
+  const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+
+  return {
+    page,
+    limit,
+    totalCount,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
   };
 }
 

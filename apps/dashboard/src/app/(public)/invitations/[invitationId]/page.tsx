@@ -84,16 +84,16 @@ function InvitationContent() {
         if (!res.ok) {
           const errBody = await res.json().catch(() => null);
           let errorMsg = "This invitation is invalid or has expired.";
-          if (errBody && "error" in errBody) {
-            if (typeof errBody.error === "string") {
+          if (errBody && typeof errBody === "object") {
+            if ("error" in errBody && typeof errBody.error === "string") {
               errorMsg = errBody.error;
-            } else if (
-              errBody.error &&
-              "issues" in errBody.error &&
-              Array.isArray(errBody.error.issues) &&
-              errBody.error.issues[0]?.message
+            }
+            if (
+              "issues" in errBody &&
+              Array.isArray(errBody.issues) &&
+              errBody.issues[0]?.message
             ) {
-              errorMsg = errBody.error.issues[0].message;
+              errorMsg = errBody.issues[0].message;
             }
           }
           if (isMounted) {
@@ -138,16 +138,16 @@ function InvitationContent() {
       if (!res.ok) {
         const errBody = await res.json().catch(() => null);
         let errorMsg = "Failed to update invitation status.";
-        if (errBody && "error" in errBody) {
-          if (typeof errBody.error === "string") {
+        if (errBody && typeof errBody === "object") {
+          if ("error" in errBody && typeof errBody.error === "string") {
             errorMsg = errBody.error;
-          } else if (
-            errBody.error &&
-            "issues" in errBody.error &&
-            Array.isArray(errBody.error.issues) &&
-            errBody.error.issues[0]?.message
+          }
+          if (
+            "issues" in errBody &&
+            Array.isArray(errBody.issues) &&
+            errBody.issues[0]?.message
           ) {
-            errorMsg = errBody.error.issues[0].message;
+            errorMsg = errBody.issues[0].message;
           }
         }
         setState("error");

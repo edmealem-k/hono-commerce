@@ -8,10 +8,10 @@ import {
   invitationParamSchema,
   updateInvitationStatusSchema,
 } from "@hono-commerce/types";
-import { zValidator } from "@hono/zod-validator";
 import { createFactory } from "hono/factory";
 
-import type { SessionUser } from "../../../types/auth";
+import { fail, ok } from "../../../lib/response";
+import { validated } from "../../../lib/validation";
 
 class InvitationApiError extends Error {
   readonly status: 400 | 404 | 409;
@@ -28,8 +28,8 @@ class InvitationApiError extends Error {
 const factory = createFactory();
 
 export const updateInvitationStatusHandler = factory.createHandlers(
-  zValidator("param", invitationParamSchema),
-  zValidator("json", updateInvitationStatusSchema),
+  validated("param", invitationParamSchema),
+  validated("json", updateInvitationStatusSchema),
   async (c) => {
     const { invitationId } = c.req.valid("param");
     const { status, token } = c.req.valid("json");
@@ -38,20 +38,20 @@ export const updateInvitationStatusHandler = factory.createHandlers(
     const verifyResult = await verifyJwt(token, "invitation");
     if (!verifyResult.success) {
       return c.json(
-        {
+        fail({
           error: "Invalid or expired invitation token",
           code: verifyResult.error,
-        },
+        }),
         400,
       );
     }
 
     if (verifyResult.payload.invitationId !== invitationId) {
       return c.json(
-        {
+        fail({
           error: "Invitation token does not match the requested invitation",
           code: "TOKEN_MISMATCH",
-        },
+        }),
         400,
       );
     }
@@ -68,22 +68,22 @@ export const updateInvitationStatusHandler = factory.createHandlers(
 
       if (!session?.user) {
         return c.json(
-          {
+          fail({
             error:
               "You must be signed in to accept this invitation. Please sign in or create an account with the invited email.",
             code: "AUTH_REQUIRED",
-          },
+          }),
           401,
         );
       }
 
-      const sessionUser = session.user as SessionUser;
+      const sessionUser = session.user;
       if (sessionUser.status !== "active" || sessionUser.banned) {
         return c.json(
-          {
+          fail({
             error: "Your account is suspended or deactivated",
             code: "ACCOUNT_SUSPENDED",
-          },
+          }),
           403,
         );
       }
@@ -91,10 +91,10 @@ export const updateInvitationStatusHandler = factory.createHandlers(
       const sessionEmail = session.user.email.toLowerCase().trim();
       if (sessionEmail !== inviteEmail) {
         return c.json(
-          {
+          fail({
             error: `You are signed in as ${sessionEmail}, but this invitation was sent to ${inviteEmail}. Please switch accounts.`,
             code: "EMAIL_MISMATCH",
-          },
+          }),
           403,
         );
       }
@@ -202,28 +202,37 @@ export const updateInvitationStatusHandler = factory.createHandlers(
       });
 
       return c.json(
-        {
-          success: true,
+        ok({
           data: {
             id: result.id,
             status: result.status,
             role: result.role,
             tenantId: result.tenantId,
           },
-        },
+          message:
+            status === "accepted"
+              ? "Invitation accepted successfully"
+              : "Invitation declined successfully",
+        }),
         200,
       );
     } catch (err) {
       if (err instanceof InvitationApiError) {
-        return c.json({ error: err.message, code: err.code }, err.status);
+        return c.json(
+          fail({
+            error: err.message,
+            code: err.code,
+          }),
+          err.status,
+        );
       }
 
       console.error("[updateInvitationStatusHandler] Transaction error:", err);
       return c.json(
-        {
+        fail({
           error: "An unexpected error occurred while resolving invitation",
           code: "INTERNAL_ERROR",
-        },
+        }),
         500,
       );
     }
