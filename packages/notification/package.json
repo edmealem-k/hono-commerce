@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/types.ts",
-    "./notify": "./src/notify.ts"
+    "./notify": "./src/notify.ts",
+    "./templates": "./src/templates/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

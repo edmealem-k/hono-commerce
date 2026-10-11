@@ -5,6 +5,7 @@ import { enqueueEmail } from "@hono-commerce/queue";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, magicLink } from "better-auth/plugins";
+import { adminAc, userAc } from "better-auth/plugins/admin/access";
 
 export function createAuth() {
   const db = createDb();
@@ -56,6 +57,11 @@ export function createAuth() {
       admin({
         defaultRole: "customer",
         adminRoles: ["admin", "staff"],
+        roles: {
+          admin: adminAc,
+          staff: adminAc,
+          customer: userAc,
+        },
       }),
     ],
   });

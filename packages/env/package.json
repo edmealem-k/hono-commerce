@@ -8,7 +8,8 @@
     "./storefront": "./src/storefront.ts",
     "./dashboard": "./src/dashboard.ts",
     "./realtime": "./src/realtime.ts",
-    "./worker": "./src/worker.ts"
+    "./worker": "./src/worker.ts",
+    "./database": "./src/database.ts"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
