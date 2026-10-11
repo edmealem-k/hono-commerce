@@ -49,6 +49,15 @@ Key architectural decisions that govern our design choices and prevent regressio
 - **Decision**: Frontends (`apps/dashboard`, `apps/storefront`) infer endpoint response shapes directly from Hono route definitions using `InferResponseType<typeof apiClient.api.v1.[domain].[endpoint].$[method], 200>` from `hono/client`. `@hono-commerce/types` is strictly reserved for incoming request validation schemas (`zValidator`), route catalogs, and shared domain constants.
 - **Rationale**: Guarantees 100% end-to-end type safety and zero drift between backend endpoints and frontend data consumption with zero boilerplate. When backend return shapes change, TypeScript immediately flags mismatches across consuming apps at compile time.
 
+### ADR-006: Vertical Slice & One-File-Per-Handler API Architecture (Zero Backend Route Dictionary)
+
+- **Context**: Backend APIs often fall victim to the "God Service" anti-pattern (multi-thousand line service files containing dozens of unrelated operations) or bloated controllers, paired with fragile hand-written route dictionaries.
+- **Decision**:
+  1. Organize all backend features into vertical slice modules (`apps/api/src/modules/<domain>/`).
+  2. Adopt the **One-File-Per-Handler Pattern** where each HTTP operation lives in its own dedicated, single-responsibility file under `modules/<domain>/handlers/<operation>.ts`, mounted via a declarative `*.routes.ts`.
+  3. Never write or maintain manual backend API route dictionaries (`routes.api = { ... }`). The backend Hono router chains into `AppType`, allowing `apiClient = hc<AppType>(...)` to auto-infer the complete API tree, methods, parameters, request bodies, and response types directly from the TypeScript AST. `packages/types/src/routes/catalog.ts` is strictly reserved for Next.js frontend UI page navigation routes.
+- **Rationale**: Eliminates bloated multi-thousand line service files, prevents git merge conflicts, ensures localized file ownership and instant debugging, and guarantees 100% end-to-end type safety without redundant route dictionaries.
+
 ---
 
 ## 3. How to Reference Architecture in Specs

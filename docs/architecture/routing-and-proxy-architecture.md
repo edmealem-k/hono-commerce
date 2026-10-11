@@ -178,15 +178,32 @@ export function StoreHeader() {
 
 ---
 
-## 5. Public Routes & Proxy Exclusions
+## 5. Public Routes & Route Group Architecture (`apps/dashboard/src/app/(public)`)
 
-Public landing and authentication pages bypass tenant slug rewrites:
+Because `apps/dashboard` has a small number of public landing and authentication pages, all public pages are organized under a dedicated **`(public)` route group** for clean isolation from tenant and admin layouts:
 
-- `/verify-email`: Better Auth email verification landing.
-- `/reset-password`: Secure password reset token form.
-- `/invitations/[invitationId]`: Workspace invitation acceptance.
+```text
+apps/dashboard/src/app/
+├── (admin)/                       # Superadmin portal (admin.localhost:3002)
+├── (tenant)/[slug]/               # Merchant store portal ([slug].localhost:3002)
+└── (public)/                      # Public auth & token resolution gateway
+    ├── layout.tsx                 # Centered card layout (max-w-md, brand hero, subtle gradient)
+    ├── sign-in/
+    │   └── page.tsx               # Passwordless magic link request form
+    ├── verify/
+    │   └── page.tsx               # Magic link callback landing & auto-redirect
+    └── invitations/
+        └── [invitationId]/
+            └── page.tsx           # Store identity, status pill, role badge, Accept / Decline actions
+```
 
-In `apps/dashboard/src/proxy.ts`, public paths matching `PUBLIC_PATHS` serve the root dashboard application directly without internal rewrite to `/[slug]/*`.
+### Proxy Bypass (`apps/dashboard/src/proxy.ts`)
+
+Public paths match `PUBLIC_PATHS` and bypass tenant slug rewrites, serving the `(public)` route group directly on root host or subdomains:
+
+```ts
+const PUBLIC_PATHS = ["/sign-in", "/verify", "/invitations"];
+```
 
 ---
 

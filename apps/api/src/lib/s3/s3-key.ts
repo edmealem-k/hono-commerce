@@ -1,3 +1,7 @@
+import { randomUUID } from "node:crypto";
+
+import type { StorageFolder } from "@hono-commerce/types";
+
 export function sanitizeFileName(name: string): string {
   return name
     .toLowerCase()
@@ -11,12 +15,11 @@ export function generateTenantS3Key({
   fileName,
 }: {
   tenantId: string;
-  category: "products" | "kyc" | "avatars" | "chat" | "documents";
+  category: StorageFolder;
   fileName: string;
 }): string {
   const timestamp = Date.now();
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  const cleanName = sanitizeFileName(fileName);
+  const cleanName = sanitizeFileName(fileName) || "file";
 
-  return `tenants/${tenantId}/${category}/${timestamp}-${randomSuffix}-${cleanName}`;
+  return `tenants/${tenantId}/${category}/${timestamp}-${randomUUID()}-${cleanName}`;
 }

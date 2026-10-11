@@ -5,6 +5,9 @@
     ".": {
       "default": "./src/index.ts"
     },
+    "./seed": {
+      "default": "./src/seed/index.ts"
+    },
     "./*": {
       "default": "./src/*.ts"
     }
@@ -14,7 +17,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:deploy": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun run src/seed/index.ts"
   },
   "dependencies": {
     "@hono-commerce/env": "workspace:*",

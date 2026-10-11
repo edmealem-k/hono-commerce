@@ -5,10 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./routes": "./src/routes/index.ts"
+    "./routes": "./src/routes/index.ts",
+    "./schemas/*": "./src/schemas/*.ts",
+    "./domain/*": "./src/domain/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono-commerce/db": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@hono-commerce/config": "workspace:*",

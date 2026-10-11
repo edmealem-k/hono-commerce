@@ -1,5 +1,6 @@
 import {
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -8,8 +9,8 @@ import { env } from "@hono-commerce/env/api";
 
 import { getS3Client } from "./s3-client";
 
-export const DEFAULT_READ_EXPIRY_SECONDS = 3600; // 1 hour
-export const DEFAULT_UPLOAD_EXPIRY_SECONDS = 900; // 15 minutes
+export const DEFAULT_READ_EXPIRY_SECONDS = env.S3_READ_TTL_SECONDS;
+export const DEFAULT_UPLOAD_EXPIRY_SECONDS = env.S3_UPLOAD_TTL_SECONDS;
 
 export async function getReadSignedUrl(
   s3Key: string | undefined | null,
@@ -17,21 +18,10 @@ export async function getReadSignedUrl(
 ): Promise<string | null> {
   if (!s3Key) return null;
 
-  // Direct public URL or local blob passthrough
-  if (
-    s3Key.startsWith("http://") ||
-    s3Key.startsWith("https://") ||
-    s3Key.startsWith("blob:")
-  ) {
-    return s3Key;
-  }
-
   const bucket = env.AWS_S3_BUCKET_NAME;
   if (!bucket) {
-    console.warn(
-      "AWS_S3_BUCKET_NAME is not configured. Returning fallback key.",
-    );
-    return s3Key;
+    console.error("AWS_S3_BUCKET_NAME is not configured.");
+    return null;
   }
 
   try {
@@ -69,6 +59,7 @@ export async function getUploadPresignedUrl({
       Bucket: bucket,
       Key: s3Key,
       ContentType: contentType,
+      IfNoneMatch: "*",
     });
 
     const uploadUrl = await getSignedUrl(client, command, { expiresIn });
@@ -96,4 +87,27 @@ export async function deleteS3Object(s3Key: string): Promise<boolean> {
     console.error("Error deleting S3 object:", s3Key, error);
     return false;
   }
+}
+
+export async function headS3Object(s3Key: string): Promise<{
+  contentLength: number;
+  contentType: string | null;
+}> {
+  const bucket = env.AWS_S3_BUCKET_NAME;
+  if (!bucket) {
+    throw new Error("AWS_S3_BUCKET_NAME is not configured");
+  }
+
+  const result = await getS3Client().send(
+    new HeadObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+    }),
+  );
+
+  return {
+    contentLength: result.ContentLength ?? 0,
+    contentType:
+      result.ContentType?.split(";")[0]?.trim().toLowerCase() ?? null,
+  };
 }

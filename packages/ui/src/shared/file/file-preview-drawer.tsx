@@ -13,8 +13,8 @@ import { cn } from "@hono-commerce/ui/lib/utils";
 import { LockIcon, Maximize2Icon, Minimize2Icon, EyeIcon } from "lucide-react";
 import { useState } from "react";
 
-import { FilePreview } from "./file-preview";
 import { MimeIcon } from "./mime-icon";
+import { FileRenderer } from "./preview/file-renderer";
 
 export interface FilePreviewDrawerProps {
   url: string;
@@ -87,7 +87,7 @@ export function FilePreviewDrawer({
         </DrawerHeader>
 
         <div className="bg-muted/10 relative min-h-0 flex-1 overflow-hidden">
-          <FilePreview url={url} type={type} fileName={fileName} />
+          <FileRenderer url={url} mimeType={type} fileName={fileName} />
         </div>
       </DrawerContent>
     </Drawer>

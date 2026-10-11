@@ -1,4 +1,4 @@
-import { env } from "@hono-commerce/env/api";
+import { env } from "@hono-commerce/env/database";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 import * as schema from "./schema";
@@ -8,3 +8,4 @@ export function createDb() {
 }
 
 export const db = createDb();
+export * from "drizzle-orm";

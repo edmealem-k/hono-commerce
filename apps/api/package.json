@@ -13,14 +13,15 @@
     "start": "bun run dist/index.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1121.0",
-    "@aws-sdk/s3-request-presigner": "^3.1121.0",
+    "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
     "@bull-board/api": "catalog:",
     "@bull-board/hono": "catalog:",
     "@hono-commerce/auth": "workspace:*",
     "@hono-commerce/db": "workspace:*",
     "@hono-commerce/env": "workspace:*",
     "@hono-commerce/queue": "workspace:*",
+    "@hono-commerce/types": "workspace:*",
     "@hono/zod-validator": "^0.9.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",

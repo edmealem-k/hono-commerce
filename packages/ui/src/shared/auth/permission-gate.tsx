@@ -40,20 +40,67 @@ export interface PermissionGateProps {
   children: React.ReactNode;
 }
 
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ["*"],
+  staff: [
+    "PLATFORM:READ",
+    "PLATFORM:SUPPORT",
+    "TENANT:READ",
+    "ORDERS:READ",
+    "AUDIT:READ",
+  ],
+  owner: [
+    "TENANT:MANAGE",
+    "TENANT:BILLING",
+    "TENANT:SETTINGS",
+    "TEAM:MANAGE",
+    "TEAM:INVITE",
+    "CATALOG:MANAGE",
+    "ORDERS:MANAGE",
+    "STORAGE:MANAGE",
+    "STORAGE:UPLOAD",
+    "ANALYTICS:READ",
+  ],
+  member: [
+    "CATALOG:MANAGE",
+    "ORDERS:MANAGE",
+    "STORAGE:UPLOAD",
+    "ANALYTICS:READ",
+  ],
+  customer: ["CUSTOMER:PROFILE", "CUSTOMER:ORDERS"],
+};
+
 /**
  * Forward-compatible permission evaluator for the UI.
- *
- * Phase 1: Returns true for any authenticated user.
- * Phase 2: Upgrades to granular permission checks against `user.permissions`.
+ * Matches explicit user permissions or role-based permission grants.
  */
 export function checkUiPermission(
   user: PermissionGateSubject | null | undefined,
-  _permission: string,
+  permission: string,
   _tenantId?: string,
 ): boolean {
-  if (!user) return false;
-  // Phase 1: Permissive access for authenticated users
-  return true;
+  if (!user || !user.role) return false;
+
+  // Platform admin has universal access
+  if (user.role === "admin") {
+    return true;
+  }
+
+  // Explicit subject permissions override
+  if (Array.isArray(user.permissions)) {
+    if (
+      user.permissions.includes("*") ||
+      user.permissions.includes(permission)
+    ) {
+      return true;
+    }
+  }
+
+  // Standard role permission grants
+  const rolePermissions = ROLE_PERMISSIONS[user.role];
+  if (!rolePermissions) return false;
+
+  return rolePermissions.includes("*") || rolePermissions.includes(permission);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { renderEmailTemplate } from "@hono-commerce/notification";
+import { renderEmailTemplate } from "@hono-commerce/notification/templates";
 
 import type { EmailJobData } from "@hono-commerce/queue";
 

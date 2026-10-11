@@ -37,7 +37,11 @@ export function useS3Url(
       }
 
       if (!getReadSignedUrl) {
-        setState({ url: s3Key, isLoading: false, error: null });
+        setState({
+          url: null,
+          isLoading: false,
+          error: "A signed URL resolver is required for private files",
+        });
         return;
       }
 

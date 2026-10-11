@@ -1,3 +1,9 @@
+import type {
+  MerchantRole,
+  PlatformAdminRole,
+  PlatformRole,
+} from "@hono-commerce/types";
+
 export type NotificationChannel = "inApp" | "email" | "push" | "sms";
 
 export interface NotificationChannelOptions {
@@ -5,6 +11,7 @@ export interface NotificationChannelOptions {
   email?: boolean;
   push?: boolean;
   sms?: boolean;
+  idempotencyKey?: string;
 }
 
 export type NotificationScope = "USER" | "TENANT" | "SYSTEM";
@@ -52,6 +59,7 @@ export interface UserNotificationPayload {
   userId: string;
   email?: string;
   phone?: string;
+  idempotencyKey?: string;
   data: NotificationPayloadData;
 }
 
@@ -59,17 +67,17 @@ export interface TenantNotificationPayload {
   tenantId: string;
   /**
    * Filter recipients by member role (e.g. ["owner"], ["owner", "member"]).
-   * TODO(auth-schema): Bind to MerchantRole ("owner" | "member") once auth & tenantMember schema is finalized.
    */
-  targetRoles?: string[];
+  targetRoles?: MerchantRole[];
+  idempotencyKey?: string;
   data: NotificationPayloadData;
 }
 
 export interface SystemNotificationPayload {
   /**
    * Filter recipients by platform role (e.g. ["admin"], ["staff"]).
-   * TODO(auth-schema): Bind to PlatformRole ("admin" | "staff") once platform RBAC schema is finalized.
    */
-  systemRoles?: string[];
+  systemRoles?: (PlatformRole | PlatformAdminRole)[];
+  idempotencyKey?: string;
   data: NotificationPayloadData;
 }

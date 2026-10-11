@@ -9,12 +9,17 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "dependencies": {
     "@hono-commerce/db": "workspace:*",
     "@hono-commerce/env": "workspace:*",
+    "@hono-commerce/queue": "workspace:*",
+    "@hono-commerce/types": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "jose": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

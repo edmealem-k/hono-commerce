@@ -1,3 +1,4 @@
+import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
 
 import type { NotificationPayloadData } from "../types";
@@ -15,10 +16,7 @@ function normalizeActionUrl(url?: string): string | undefined {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.BETTER_AUTH_URL ||
-    "http://localhost:3000";
+  const baseUrl = env.DASHBOARD_URL || env.BETTER_AUTH_URL;
   return `${baseUrl.replace(/\/+$/, "")}/${url.replace(/^\/+/, "")}`;
 }
 
