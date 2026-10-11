@@ -275,6 +275,8 @@
     },
   },
   "catalog": {
+    "@aws-sdk/client-s3": "^3.1121.0",
+    "@aws-sdk/s3-request-presigner": "^3.1121.0",
     "@bull-board/api": "^6.7.0",
     "@bull-board/hono": "^6.7.0",
     "@hookform/resolvers": "^5.9.1",
