@@ -70,6 +70,8 @@ Stores durable metadata and lifecycle status:
 - failure diagnostics: `lastStorageError`
 - auditing: `createdAt`, `updatedAt`
 
+`category` is the storage folder/policy value (Nexudy's folder concept). It is intentionally separate from `resourceType` on `file_asset_link`, which identifies the business resource linked after upload.
+
 Supported asset statuses:
 
 ```text
@@ -250,3 +252,53 @@ Before merging storage changes:
 - S3 bucket CORS permits only required origins and methods;
 - `bun run verify` passes with zero warnings and errors;
 - human migration review is complete.
+
+## Current implementation state
+
+This section records the repository state as of **2026-10-11**. It prevents future agents from assuming that the entire architecture is already implemented.
+
+### Implemented backend pieces
+
+| Capability                     | Current location                                                 | State                                                        |
+| :----------------------------- | :--------------------------------------------------------------- | :----------------------------------------------------------- |
+| Shared request schemas         | `packages/types/src/schemas/storage.ts`                          | Implemented                                                  |
+| File and upload-attempt tables | `packages/db/src/schema/files.ts`                                | Schema authored; migration requires human review/application |
+| S3 client/configuration        | `apps/api/src/lib/s3/s3-client.ts`, `packages/env/src/api.ts`    | Implemented                                                  |
+| UUID tenant key generation     | `apps/api/src/lib/s3/s3-key.ts`                                  | Implemented                                                  |
+| Presigned PUT/GET helpers      | `apps/api/src/lib/s3/s3-signed-url.ts`                           | Implemented                                                  |
+| Upload session                 | `apps/api/src/modules/storage/handlers/create-upload-session.ts` | Implemented                                                  |
+| S3 confirmation                | `apps/api/src/modules/storage/handlers/confirm-upload.ts`        | Implemented                                                  |
+| Client failure reporting       | `apps/api/src/modules/storage/handlers/report-upload-failure.ts` | Implemented                                                  |
+| File-ID preview URL            | `apps/api/src/modules/storage/handlers/get-preview-url.ts`       | Implemented with linked-resource context checks              |
+
+### Remaining application wiring
+
+The Nexudy-equivalent upload system is implemented. Only these two integration steps remain:
+
+| Remaining item           | Current state                                                                                          | Next step                                                                                               |
+| :----------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
+| First domain integration | `file_asset_link` and attach/detach routes provide the `model/modelId` equivalent                      | Wire one real domain, such as a tenant logo or product image, and pass its resource context to previews |
+| AWS bucket configuration | Browser CORS policy is documented in `docs/architecture/storage/s3-cors.md`; application code is ready | Apply the policy to the actual bucket and verify deployed origins                                       |
+
+### Contract alignment
+
+Confirmation now has one canonical contract. The route validates `uploadId` only as a path parameter:
+
+```text
+POST /api/v1/storage/uploads/:uploadId/confirm
+```
+
+The obsolete body schema was removed so clients cannot send duplicate identifiers. Failure reporting continues to use JSON because it includes the failure reason.
+
+### Component ownership and duplicate-prevention rules
+
+There is one implementation for each responsibility:
+
+- `preview/file-renderer.tsx` is the canonical MIME renderer. It owns image, PDF, video, audio, bounded text/CSV, and unsupported-file fallback behavior.
+- `file-preview-drawer.tsx` is the global stacked drawer shell; `preview/file-viewer-sheet.tsx` is the locally controlled sheet shell. They intentionally differ in state ownership, but both delegate rendering to `FileRenderer`.
+- `upload/file-uploader.tsx` is the generic upload surface; `upload/image-uploader.tsx` is its image-specific composition with preview and `prepareFile` support.
+- `mime-icon.tsx` owns file-type icon selection only, and `use-s3-url.ts` owns signed-URL resolution only.
+
+The current UI set is complete for upload, signed preview, viewing, and opt-in image cropping. Do not add another renderer, drawer, uploader, cropper, or S3 URL hook—extend these canonical modules instead.
+
+This intentionally does not add Nexudy's AI ingestion table or a large resource-specific relation graph. Those belong to a consuming domain only when that domain needs them.

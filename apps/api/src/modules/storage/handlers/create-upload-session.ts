@@ -1,3 +1,4 @@
+import { hasPermission } from "@hono-commerce/auth/permissions";
 import { and, db, eq } from "@hono-commerce/db";
 import { fileAsset, fileUploadAttempt } from "@hono-commerce/db/schema/files";
 import { env } from "@hono-commerce/env/api";
@@ -32,9 +33,14 @@ export const createUploadSessionHandler = factory.createHandlers(
 
     if (
       (input.category === "kyc" || input.category === "documents") &&
-      !user.permissions?.includes("STORAGE:MANAGE") &&
-      tenantContext.role !== "owner" &&
-      user.role !== "admin"
+      !hasPermission(
+        {
+          id: user.id,
+          role: tenantContext.role,
+          permissions: user.permissions,
+        },
+        "STORAGE:MANAGE",
+      )
     ) {
       return c.json(
         fail({

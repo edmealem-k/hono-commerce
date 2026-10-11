@@ -4,6 +4,7 @@ export const QueueName = {
   TENANT_WEBHOOKS: "tenant-webhooks",
   ORDERS: "orders",
   NOTIFICATIONS: "notifications",
+  STORAGE_CLEANUP: "storage-cleanup",
 } as const;
 
 export type QueueNameType = (typeof QueueName)[keyof typeof QueueName];
@@ -23,3 +24,4 @@ export interface EnqueueNotificationOptions {
 // Re-export all domain job types & schemas
 export * from "./jobs/email";
 export * from "./jobs/notification";
+export * from "./jobs/storage";

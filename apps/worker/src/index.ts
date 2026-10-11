@@ -2,6 +2,10 @@ import { env } from "@hono-commerce/env/worker";
 
 import { createEmailWorker } from "./consumers/email";
 import { createNotificationWorker } from "./consumers/notification";
+import {
+  createStorageCleanupWorker,
+  runStorageExpirySweep,
+} from "./consumers/storage";
 
 console.log("┌────────────────────────────────────────────────────────┐");
 console.log("│ 🚀 Hono Commerce Background Worker Initializing...     │");
@@ -11,13 +15,30 @@ console.log("└─────────────────────�
 
 const emailWorker = createEmailWorker();
 const notificationWorker = createNotificationWorker();
+const storageCleanupWorker = createStorageCleanupWorker();
+const storageExpiryTimer = setInterval(
+  () => {
+    void runStorageExpirySweep().catch((error) => {
+      console.error("[Worker:Storage] Expiry sweep failed:", error);
+    });
+  },
+  5 * 60 * 1000,
+);
+void runStorageExpirySweep().catch((error) => {
+  console.error("[Worker:Storage] Initial expiry sweep failed:", error);
+});
 
 console.log("[Worker] Listening for jobs on queues: 'emails', 'notifications'");
 
 async function handleShutdown(signal: string) {
   console.log(`\n[Worker] Received ${signal}. Shutting down gracefully...`);
   try {
-    await Promise.all([emailWorker.close(), notificationWorker.close()]);
+    clearInterval(storageExpiryTimer);
+    await Promise.all([
+      emailWorker.close(),
+      notificationWorker.close(),
+      storageCleanupWorker.close(),
+    ]);
     console.log("[Worker] All workers closed. Exiting process.");
     process.exit(0);
   } catch (err) {

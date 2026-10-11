@@ -1,5 +1,6 @@
+import { hasPermission } from "@hono-commerce/auth/permissions";
 import { and, db, eq } from "@hono-commerce/db";
-import { fileAsset } from "@hono-commerce/db/schema/files";
+import { fileAsset, fileAssetLink } from "@hono-commerce/db/schema/files";
 import { previewUrlQuerySchema } from "@hono-commerce/types";
 import { createFactory } from "hono/factory";
 
@@ -14,7 +15,8 @@ const factory = createFactory<TenantEnv>();
 export const getPreviewUrlHandler = factory.createHandlers(
   validated("query", previewUrlQuerySchema),
   async (c) => {
-    const { fileId, expiresIn } = c.req.valid("query");
+    const { fileId, expiresIn, resourceType, resourceId } =
+      c.req.valid("query");
     const user = c.get("user");
     const tenantContext = c.get("tenant");
     const [file] = await db
@@ -54,11 +56,51 @@ export const getPreviewUrlHandler = factory.createHandlers(
       );
     }
 
+    if (file.status === "linked") {
+      if (!resourceType || !resourceId) {
+        return c.json(
+          fail({
+            error: "A linked resource context is required for preview",
+            code: "FILE_RESOURCE_CONTEXT_REQUIRED",
+          }),
+          400,
+        );
+      }
+
+      const [link] = await db
+        .select({ id: fileAssetLink.id })
+        .from(fileAssetLink)
+        .where(
+          and(
+            eq(fileAssetLink.fileId, file.id),
+            eq(fileAssetLink.tenantId, tenantContext.tenantId),
+            eq(fileAssetLink.resourceType, resourceType),
+            eq(fileAssetLink.resourceId, resourceId),
+          ),
+        )
+        .limit(1);
+
+      if (!link) {
+        return c.json(
+          fail({
+            error: "File is not linked to this resource",
+            code: "FILE_LINK_NOT_FOUND",
+          }),
+          403,
+        );
+      }
+    }
+
     if (
       (file.category === "kyc" || file.category === "documents") &&
-      user.role !== "admin" &&
-      tenantContext.role !== "owner" &&
-      !user.permissions?.includes("STORAGE:MANAGE")
+      !hasPermission(
+        {
+          id: user.id,
+          role: tenantContext.role,
+          permissions: user.permissions,
+        },
+        "STORAGE:MANAGE",
+      )
     ) {
       return c.json(
         fail({

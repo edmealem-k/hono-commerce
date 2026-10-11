@@ -13,7 +13,8 @@ import {
 import { user } from "./auth";
 import { tenant } from "./tenant";
 
-export const fileStorageCategoryEnum = pgEnum("file_storage_category", [
+// Storage folder/policy. The SQL enum name stays stable to avoid a migration.
+export const fileStorageFolderEnum = pgEnum("file_storage_category", [
   "products",
   "kyc",
   "avatars",
@@ -24,6 +25,16 @@ export const fileStorageCategoryEnum = pgEnum("file_storage_category", [
 export const fileStorageVisibilityEnum = pgEnum("file_storage_visibility", [
   "private",
   "public",
+]);
+
+// Linked business resource. This is separate from the storage folder.
+export const fileLinkedResourceTypeEnum = pgEnum("file_resource_type", [
+  "tenant",
+  "product",
+  "user",
+  "kyc",
+  "chat",
+  "document",
 ]);
 
 export const fileAssetStatusEnum = pgEnum("file_asset_status", [
@@ -62,7 +73,7 @@ export const fileAsset = pgTable(
     expectedSize: integer("expected_size").notNull(),
     actualSize: integer("actual_size"),
     contentHash: text("content_hash"),
-    category: fileStorageCategoryEnum("category").notNull(),
+    category: fileStorageFolderEnum("category").notNull(),
     visibility: fileStorageVisibilityEnum("visibility")
       .default("private")
       .notNull(),
@@ -136,6 +147,43 @@ export const fileUploadAttempt = pgTable(
   ],
 );
 
+export const fileAssetLink = pgTable(
+  "file_asset_link",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id, { onDelete: "cascade" }),
+    fileId: uuid("file_id")
+      .notNull()
+      .references(() => fileAsset.id, { onDelete: "cascade" }),
+    resourceType: fileLinkedResourceTypeEnum("resource_type").notNull(),
+    resourceId: uuid("resource_id").notNull(),
+    linkedByUserId: uuid("linked_by_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("file_asset_link_resource_uidx").on(
+      table.tenantId,
+      table.fileId,
+      table.resourceType,
+      table.resourceId,
+    ),
+    index("file_asset_link_resource_idx").on(
+      table.tenantId,
+      table.resourceType,
+      table.resourceId,
+    ),
+    index("file_asset_link_file_idx").on(table.tenantId, table.fileId),
+  ],
+);
+
 export const fileAssetRelations = relations(fileAsset, ({ one, many }) => ({
   tenant: one(tenant, {
     fields: [fileAsset.tenantId],
@@ -146,6 +194,7 @@ export const fileAssetRelations = relations(fileAsset, ({ one, many }) => ({
     references: [user.id],
   }),
   uploadAttempts: many(fileUploadAttempt),
+  links: many(fileAssetLink),
 }));
 
 export const fileUploadAttemptRelations = relations(
@@ -161,3 +210,18 @@ export const fileUploadAttemptRelations = relations(
     }),
   }),
 );
+
+export const fileAssetLinkRelations = relations(fileAssetLink, ({ one }) => ({
+  tenant: one(tenant, {
+    fields: [fileAssetLink.tenantId],
+    references: [tenant.id],
+  }),
+  file: one(fileAsset, {
+    fields: [fileAssetLink.fileId],
+    references: [fileAsset.id],
+  }),
+  linkedBy: one(user, {
+    fields: [fileAssetLink.linkedByUserId],
+    references: [user.id],
+  }),
+}));

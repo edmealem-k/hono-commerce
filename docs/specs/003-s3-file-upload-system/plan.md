@@ -82,15 +82,11 @@ Create `packages/types/src/schemas/storage.ts` with shared Zod schemas:
 
 ```ts
 CreateUploadSessionSchema = z.object({
-  category: StorageCategorySchema,
+  category: StorageFolderSchema,
   fileName: z.string().trim().min(1).max(255),
   contentType: MimeTypeSchema,
   fileSize: z.number().int().positive(),
   visibility: z.enum(["private", "public"]).default("private"),
-})
-
-ConfirmUploadSchema = z.object({
-  uploadId: z.string().uuid(),
 })
 
 ReportUploadFailureSchema = z.object({
@@ -104,11 +100,12 @@ PreviewQuerySchema = z.object({
 })
 
 AttachFileSchema = z.object({
-  fileId: z.string().uuid(),
   resourceType: z.enum([...]),
   resourceId: z.string().uuid(),
 })
 ```
+
+Confirmation uses the `:uploadId` path parameter and has no duplicate JSON body field. Attach and detach also take `fileId` from the path.
 
 The exact resource type union must be expanded only as supported domain tables are implemented. It must not become an unvalidated string registry.
 

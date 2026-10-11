@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const storageCategorySchema = z.enum([
+export const storageFolderSchema = z.enum([
   "products",
   "kyc",
   "avatars",
@@ -30,7 +30,7 @@ export const fileUploadAttemptStatusSchema = z.enum([
   "expired",
 ]);
 
-export const fileResourceTypeSchema = z.enum([
+export const linkedResourceTypeSchema = z.enum([
   "tenant",
   "product",
   "user",
@@ -51,15 +51,11 @@ export const mimeTypeSchema = z
   .transform((value) => value.toLowerCase());
 
 export const createUploadSessionSchema = z.object({
-  category: storageCategorySchema.default("products"),
+  category: storageFolderSchema.default("products"),
   fileName: z.string().trim().min(1).max(255),
   contentType: mimeTypeSchema,
   fileSize: z.number().int().positive(),
   visibility: storageVisibilitySchema.default("private"),
-});
-
-export const confirmUploadSchema = z.object({
-  uploadId: z.string().uuid(),
 });
 
 export const uploadIdParamSchema = z.object({
@@ -71,36 +67,53 @@ export const reportUploadFailureSchema = z.object({
   reason: z.string().trim().min(1).max(4000),
 });
 
-export const previewUrlQuerySchema = z.object({
-  fileId: z.string().uuid(),
-  expiresIn: z.coerce.number().int().min(60).max(3600).default(900),
-});
+export const previewUrlQuerySchema = z
+  .object({
+    fileId: z.string().uuid(),
+    expiresIn: z.coerce.number().int().min(60).max(3600).default(900),
+    resourceType: linkedResourceTypeSchema.optional(),
+    resourceId: z.string().uuid().optional(),
+  })
+  .refine(
+    ({ resourceType, resourceId }) =>
+      (resourceType === undefined && resourceId === undefined) ||
+      (resourceType !== undefined && resourceId !== undefined),
+    { message: "resourceType and resourceId must be provided together" },
+  );
 
 export const attachFileSchema = z.object({
-  fileId: z.string().uuid(),
-  resourceType: fileResourceTypeSchema,
+  resourceType: linkedResourceTypeSchema,
   resourceId: z.string().uuid(),
 });
 
-export const deleteFileSchema = z.object({
-  permanent: z.coerce.boolean().default(false),
+export const fileIdParamSchema = z.object({
+  fileId: z.string().uuid(),
 });
 
-export type StorageCategory = z.infer<typeof storageCategorySchema>;
+export const deleteFileSchema = z.object({
+  permanent: z
+    .preprocess(
+      (value) => (value === "true" || value === true ? true : false),
+      z.boolean(),
+    )
+    .default(false),
+});
+
+export type StorageFolder = z.infer<typeof storageFolderSchema>;
 export type StorageVisibility = z.infer<typeof storageVisibilitySchema>;
 export type FileUploadStatus = z.infer<typeof fileUploadStatusSchema>;
 export type FileUploadAttemptStatus = z.infer<
   typeof fileUploadAttemptStatusSchema
 >;
-export type FileResourceType = z.infer<typeof fileResourceTypeSchema>;
+export type LinkedResourceType = z.infer<typeof linkedResourceTypeSchema>;
 export type CreateUploadSessionInput = z.infer<
   typeof createUploadSessionSchema
 >;
-export type ConfirmUploadInput = z.infer<typeof confirmUploadSchema>;
 export type UploadIdParam = z.infer<typeof uploadIdParamSchema>;
 export type ReportUploadFailureInput = z.infer<
   typeof reportUploadFailureSchema
 >;
 export type PreviewUrlQuery = z.infer<typeof previewUrlQuerySchema>;
 export type AttachFileInput = z.infer<typeof attachFileSchema>;
+export type FileIdParam = z.infer<typeof fileIdParamSchema>;
 export type DeleteFileQuery = z.infer<typeof deleteFileSchema>;
