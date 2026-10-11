@@ -1,0 +1,85 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 960 1120"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">Hono Commerce workspace illustration</title>
+  <desc id="description">
+    An abstract commerce gateway connecting store, product, and order surfaces.
+  </desc>
+  <defs>
+    <linearGradient id="canvas" x1="120" y1="80" x2="850" y2="1030" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4f2ff" />
+      <stop offset="1" stop-color="#e8e6f7" />
+    </linearGradient>
+    <linearGradient id="portalLeft" x1="320" y1="286" x2="500" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3027df" />
+      <stop offset="1" stop-color="#5650ee" />
+    </linearGradient>
+    <linearGradient id="portalRight" x1="640" y1="286" x2="460" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8068f5" />
+      <stop offset="1" stop-color="#5f4ce8" />
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#241f68" flood-opacity=".12" />
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0v40" fill="none" stroke="#6b63b5" stroke-opacity=".09" />
+    </pattern>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .canvas { fill: #272535; }
+        .grid { opacity: .32; }
+        .orbit { stroke: #9288dc; }
+        .surface { fill: #343141; stroke: #504b65; }
+        .muted-line { stroke: #77718a; }
+        .strong-line { stroke: #b7b0c9; }
+      }
+    </style>
+  </defs>
+
+  <rect class="canvas" x="24" y="24" width="912" height="1072" rx="64" fill="url(#canvas)" />
+  <rect class="grid" x="24" y="24" width="912" height="1072" rx="64" fill="url(#grid)" />
+
+  <path class="orbit" d="M122 727C222 901 450 1000 664 922c177-64 278-246 236-425" fill="none" stroke="#6c62b6" stroke-opacity=".18" stroke-width="2" stroke-dasharray="10 14" />
+  <path class="orbit" d="M91 434c56-186 239-318 433-303 188 15 339 160 368 337" fill="none" stroke="#6c62b6" stroke-opacity=".16" stroke-width="2" />
+
+  <g filter="url(#shadow)">
+    <rect class="surface" x="104" y="188" width="250" height="184" rx="24" fill="#fff" stroke="#dcd9e9" stroke-width="2" />
+    <path d="M104 247h250" stroke="#dcd9e9" stroke-width="2" />
+    <path d="M138 188h182v32c0 15-12 27-27 27H165c-15 0-27-12-27-27v-32Z" fill="#5148e5" fill-opacity=".12" />
+    <path class="strong-line" d="M145 293h88M145 321h148" fill="none" stroke="#5f596d" stroke-linecap="round" stroke-width="12" />
+    <circle cx="319" cy="322" r="13" fill="#4fb783" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect class="surface" x="652" y="697" width="208" height="238" rx="24" fill="#fff" stroke="#dcd9e9" stroke-width="2" />
+    <rect x="696" y="738" width="120" height="94" rx="16" fill="#5148e5" fill-opacity=".12" />
+    <path d="m718 774 38-22 38 22v44l-38 22-38-22v-44Z" fill="none" stroke="#6258e8" stroke-linejoin="round" stroke-width="8" />
+    <path d="m718 774 38 22 38-22M756 796v44" fill="none" stroke="#6258e8" stroke-linejoin="round" stroke-width="8" />
+    <path class="strong-line" d="M693 870h94" stroke="#5f596d" stroke-linecap="round" stroke-width="11" />
+    <path class="muted-line" d="M693 898h62" stroke="#a39ead" stroke-linecap="round" stroke-width="8" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect class="surface" x="104" y="748" width="260" height="176" rx="24" fill="#fff" stroke="#dcd9e9" stroke-width="2" />
+    <circle cx="153" cy="798" r="20" fill="#5148e5" fill-opacity=".14" />
+    <path d="m143 798 7 7 14-16" fill="none" stroke="#5148e5" stroke-linecap="round" stroke-linejoin="round" stroke-width="5" />
+    <path class="strong-line" d="M190 790h120" stroke="#5f596d" stroke-linecap="round" stroke-width="11" />
+    <path class="muted-line" d="M190 818h82" stroke="#a39ead" stroke-linecap="round" stroke-width="8" />
+    <path class="muted-line" d="M142 866h168" stroke="#a39ead" stroke-linecap="round" stroke-width="8" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <circle cx="480" cy="537" r="190" fill="#fff" fill-opacity=".78" stroke="#fff" stroke-width="3" />
+    <path fill="url(#portalLeft)" d="M326 354c0-17 19-28 34-19l105 60v80l67 39c12 7 12 25 0 32l-67 39v80l-105 60c-15 9-34-2-34-19V354Z" />
+    <path fill="url(#portalRight)" d="M634 354c0-17-19-28-34-19l-105 60v80l-67 39c-12 7-12 25 0 32l67 39v80l105 60c15 9 34-2 34-19V354Z" />
+    <path d="m428 514 52-30 52 30c12 7 12 25 0 32l-52 30-52-30c-12-7-12-25 0-32Z" fill="#241f68" fill-opacity=".24" />
+  </g>
+
+  <circle cx="781" cy="264" r="38" fill="#efb348" fill-opacity=".22" />
+  <path d="M763 264h36M781 246v36" stroke="#b87913" stroke-linecap="round" stroke-width="7" />
+  <circle cx="858" cy="579" r="15" fill="#4fb783" />
+  <circle cx="431" cy="170" r="10" fill="#e45e77" />
+</svg>
