@@ -269,7 +269,9 @@ function WorkspaceContent({
               Sign in again to view your authorized workspaces.
             </EmptyDescription>
           </EmptyHeader>
-          <Button render={<Link href="/sign-in" />}>Sign in</Button>
+          <Button nativeButton={false} render={<Link href="/sign-in" />}>
+            Sign in
+          </Button>
         </Empty>
       );
     }

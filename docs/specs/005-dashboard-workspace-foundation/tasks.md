@@ -106,13 +106,13 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 6: Tenant and platform shells
 
-- [ ] 6.1 Replace the duplicated tenant aside with the shared workspace/sidebar shell.
-- [ ] 6.2 Add a structural tenant home page with no fabricated aggregate metrics.
-- [ ] 6.3 Add tenant route metadata for breadcrumbs and active navigation.
-- [ ] 6.4 Replace the duplicated admin aside with the shared workspace/sidebar shell.
-- [ ] 6.5 Add a structural admin home page guarded by platform permission.
-- [ ] 6.6 List only implemented tenant/admin destinations; omit chat, billing, settings, moderation, queue, and platform-settings links until their contracts exist.
-- [ ] 6.7 Verify tenant context is derived from the route/proxy context and is not drilled through unrelated component layers.
+- [x] 6.1 Replace the duplicated tenant aside with the shared workspace/sidebar shell.
+- [x] 6.2 Add a structural tenant home page with no fabricated aggregate metrics.
+- [x] 6.3 Add tenant route metadata for breadcrumbs and active navigation.
+- [x] 6.4 Replace the duplicated admin aside with the shared workspace/sidebar shell.
+- [x] 6.5 Add a structural admin home page guarded by platform permission.
+- [x] 6.6 List only implemented tenant/admin destinations; omit chat, billing, settings, moderation, queue, and platform-settings links until their contracts exist.
+- [x] 6.7 Verify tenant context is derived from the route/proxy context and is not drilled through unrelated component layers.
 
 ## Phase 7: Authentication experience
 
