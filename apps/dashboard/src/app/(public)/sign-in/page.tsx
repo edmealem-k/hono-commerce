@@ -1,6 +1,15 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import {
+  magicLinkSignInSchema,
+  type MagicLinkSignInInput,
+} from "@hono-commerce/types";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@hono-commerce/ui/components/alert";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Card,
@@ -10,57 +19,67 @@ import {
   CardHeader,
   CardTitle,
 } from "@hono-commerce/ui/components/card";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@hono-commerce/ui/components/field";
 import { Input } from "@hono-commerce/ui/components/input";
 import { Skeleton } from "@hono-commerce/ui/components/skeleton";
+import { Spinner } from "@hono-commerce/ui/components/spinner";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowRight, CheckCircle2, Mail } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { type FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 type RequestStatus = "idle" | "loading" | "error" | "success";
 
+function getSafeCallbackPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+  return value;
+}
+
 function SignInContent() {
   const searchParams = useSearchParams();
-  const initialEmail = searchParams?.get("email") || "";
-  const requestedCallbackUrl = searchParams?.get("callbackUrl");
-  const callbackUrl =
-    requestedCallbackUrl?.startsWith("/") &&
-    !requestedCallbackUrl.startsWith("//")
-      ? requestedCallbackUrl
-      : "/verify";
-
-  const [email, setEmail] = useState(initialEmail);
-  const [name, setName] = useState("");
+  const router = useRouter();
+  const session = authClient.useSession();
+  const initialEmail = searchParams.get("email") ?? "";
+  const callbackPath = getSafeCallbackPath(searchParams.get("callbackUrl"));
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const form = useForm<MagicLinkSignInInput>({
+    resolver: zodResolver(magicLinkSignInSchema),
+    defaultValues: { email: initialEmail, name: "" },
+    mode: "onTouched",
+  });
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedName = name.trim();
-
-    if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setErrorMessage("Please enter a valid email address");
-      setStatus("error");
-      return;
+  useEffect(() => {
+    if (!session.isPending && session.data?.user) {
+      router.replace(callbackPath);
     }
+  }, [callbackPath, router, session.data?.user, session.isPending]);
 
+  async function handleSubmit(values: MagicLinkSignInInput) {
     setStatus("loading");
     setErrorMessage(null);
-
     try {
+      const verificationPath = `/verify?next=${encodeURIComponent(callbackPath)}`;
       const { error } = await authClient.signIn.magicLink({
-        email: trimmedEmail,
-        name: trimmedName || undefined,
-        callbackURL: callbackUrl,
+        email: values.email.toLowerCase(),
+        name: values.name || undefined,
+        callbackURL: verificationPath,
       });
-
       if (error) {
         setErrorMessage(error.message || "Failed to send sign-in link");
         setStatus("error");
         return;
       }
-
       setStatus("success");
     } catch {
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -68,131 +87,116 @@ function SignInContent() {
     }
   }
 
-  // Success Screen
   if (status === "success") {
     return (
-      <Card className="border-border/80 shadow-lg">
-        <CardHeader className="pb-2 text-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="size-6" />
-          </div>
-          <CardTitle className="text-xl font-bold">Check your inbox</CardTitle>
-          <CardDescription className="mt-1 text-sm">
-            We sent a secure magic link to{" "}
-            <span className="text-foreground font-semibold">{email}</span>.
-            Click the link in the email to sign in to your account.
+      <Card>
+        <CardHeader className="text-center">
+          <CheckCircle2 className="text-primary mx-auto size-8" />
+          <CardTitle>Check your inbox</CardTitle>
+          <CardDescription>
+            We sent a secure magic link to {form.getValues("email")}.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4 text-center">
-          <div className="bg-muted/50 text-muted-foreground rounded-lg p-3 text-xs">
-            Can&apos;t find the email? Check your spam folder or wait a few
-            moments. The link will expire in 15 minutes.
-          </div>
+        <CardContent>
+          <Alert>
+            <Mail />
+            <AlertTitle>Link expires in 15 minutes</AlertTitle>
+            <AlertDescription>
+              Check your spam folder if the message does not arrive shortly.
+            </AlertDescription>
+          </Alert>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2 pt-2">
+        <CardFooter>
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => {
-              setStatus("idle");
-              setErrorMessage(null);
-            }}
+            onClick={() => setStatus("idle")}
           >
             Use a different email
           </Button>
-          <div className="text-muted-foreground mt-2 text-center text-xs">
-            Back to{" "}
-            <Link href="/" className="text-primary font-medium hover:underline">
-              homepage
-            </Link>
-          </div>
         </CardFooter>
       </Card>
     );
   }
 
+  const emailError = form.formState.errors.email;
+  const nameError = form.formState.errors.name;
+
   return (
-    <Card className="border-border/80 shadow-lg">
-      <CardHeader className="pb-4">
-        <div className="bg-primary/10 text-primary mb-2 flex size-10 items-center justify-center rounded-lg">
+    <Card>
+      <CardHeader>
+        <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
           <Mail className="size-5" />
         </div>
-        <CardTitle className="text-xl font-bold">Welcome</CardTitle>
-        <CardDescription className="text-sm">
-          Enter your email to sign in or create an account with a secure magic
-          link.
+        <CardTitle>Welcome back</CardTitle>
+        <CardDescription>
+          Use your email to receive a secure magic link.
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          {status === "error" && errorMessage && (
-            <div className="bg-destructive/10 text-destructive border-destructive/20 flex items-start gap-2 rounded-lg border p-3 text-xs">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="email"
-              className="text-foreground text-xs font-semibold"
-            >
-              Email address
-            </label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@store.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={status === "loading"}
-              required
-              autoFocus
-              className="h-10 text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="name"
-                className="text-foreground text-xs font-semibold"
-              >
-                Full Name
-              </label>
-              <span className="text-muted-foreground text-[11px]">
-                Optional for existing accounts
-              </span>
-            </div>
-            <Input
-              id="name"
-              type="text"
-              autoComplete="name"
-              placeholder="Jane Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={status === "loading"}
-              className="h-10 text-sm"
-            />
-          </div>
+      <form onSubmit={form.handleSubmit(handleSubmit)} noValidate>
+        <CardContent>
+          <FieldGroup>
+            {status === "error" && errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle />
+                <AlertTitle>Unable to continue</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+            <Field data-invalid={Boolean(emailError)}>
+              <FieldLabel htmlFor="email">Email address</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@store.com"
+                aria-invalid={Boolean(emailError)}
+                disabled={status === "loading"}
+                {...form.register("email")}
+              />
+              <FieldError errors={[emailError]} />
+            </Field>
+            <Field data-invalid={Boolean(nameError)}>
+              <FieldLabel htmlFor="name">Full name</FieldLabel>
+              <Input
+                id="name"
+                type="text"
+                autoComplete="name"
+                placeholder="Jane Doe"
+                aria-invalid={Boolean(nameError)}
+                disabled={status === "loading"}
+                {...form.register("name")}
+              />
+              <FieldDescription>
+                Optional for existing accounts.
+              </FieldDescription>
+              <FieldError errors={[nameError]} />
+            </Field>
+          </FieldGroup>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 pt-2">
+        <CardFooter className="flex-col gap-3">
           <Button
             type="submit"
-            className="h-10 w-full font-medium"
-            disabled={status === "loading" || !email.trim()}
+            className="w-full"
+            disabled={status === "loading"}
           >
             {status === "loading" ? (
-              "Sending link..."
+              <>
+                <Spinner data-icon="inline-start" /> Sending link...
+              </>
             ) : (
               <>
-                <span>Continue with Email</span>
-                <ArrowRight className="ml-1.5 size-4" />
+                Continue with email
+                <ArrowRight data-icon="inline-end" />
               </>
             )}
           </Button>
-          <p className="text-muted-foreground text-center text-[11px]">
+          <p className="text-muted-foreground text-center text-xs">
             By continuing, you agree to our Terms of Service and Privacy Policy.
           </p>
+          <Link href="/" className="text-primary text-xs hover:underline">
+            Return to workspace manager
+          </Link>
         </CardFooter>
       </form>
     </Card>
@@ -203,17 +207,16 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <Card className="border-border/80 shadow-lg">
-          <CardHeader className="space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-48" />
+        <Card>
+          <CardHeader className="gap-3">
+            <Skeleton className="size-10" />
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
           </CardHeader>
-          <CardContent className="space-y-4 py-4">
+          <CardContent className="flex flex-col gap-4">
+            <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </CardContent>
-          <CardFooter>
-            <Skeleton className="h-10 w-full" />
-          </CardFooter>
         </Card>
       }
     >

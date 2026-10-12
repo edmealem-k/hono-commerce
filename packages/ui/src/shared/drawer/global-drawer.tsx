@@ -162,7 +162,7 @@ function DrawerItem({
           side={side}
           showCloseButton={false}
           className={cn(
-            "p-0",
+            "w-full p-0 sm:w-auto",
             drawer.size === "sm" && "sm:max-w-sm",
             drawer.size === "md" && "sm:max-w-md",
             drawer.size === "lg" && "sm:max-w-lg",

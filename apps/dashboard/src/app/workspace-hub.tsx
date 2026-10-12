@@ -32,16 +32,12 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@hono-commerce/ui/components/empty";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@hono-commerce/ui/components/popover";
 import { Skeleton } from "@hono-commerce/ui/components/skeleton";
 import { AppearancePanel } from "@hono-commerce/ui/shared/appearance/appearance-panel";
 import { GlobalDrawer } from "@hono-commerce/ui/shared/drawer/global-drawer";
 import { useDrawer } from "@hono-commerce/ui/shared/drawer/use-drawer";
 import { MultiStepFlow } from "@hono-commerce/ui/shared/forms/multi-step-flow";
+import { ResponsiveActionPanel } from "@hono-commerce/ui/shared/layout/responsive-action-panel";
 import { NotificationPanel } from "@hono-commerce/ui/shared/notifications/notification-panel";
 import { WorkspaceHeader } from "@hono-commerce/ui/shared/workspace-shell/workspace-header";
 import {
@@ -117,53 +113,51 @@ export function WorkspaceHub({
         title="Workspace Manager"
         actions={
           <>
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Notifications"
-                    className="relative"
-                  />
-                }
-              >
-                <Bell className="size-4" />
-                {notificationData?.unreadCount ? (
-                  <span className="bg-primary text-primary-foreground absolute top-1 right-1 flex size-3.5 items-center justify-center rounded-full text-[9px] font-semibold">
-                    {notificationData.unreadCount > 9
-                      ? "9+"
-                      : notificationData.unreadCount}
-                  </span>
-                ) : null}
-              </PopoverTrigger>
-              <PopoverContent align="end" className="p-0">
-                <NotificationPanel
-                  notifications={notificationData?.items ?? []}
-                  unreadCount={notificationData?.unreadCount ?? 0}
-                  isLoading={notificationsQuery.isLoading}
-                  isError={notificationsQuery.isError}
-                  onRead={(notification) => {
-                    markReadMutation.mutate({
-                      notificationId: notification.id,
-                      isRead: true,
-                    });
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button variant="ghost" size="icon" aria-label="Appearance" />
-                }
-              >
-                <Palette className="size-4" />
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72">
-                <AppearancePanel />
-              </PopoverContent>
-            </Popover>
+            <ResponsiveActionPanel
+              title="Notifications"
+              description="Recent workspace activity"
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Notifications"
+                  className="relative"
+                >
+                  <Bell className="size-4" />
+                  {notificationData?.unreadCount ? (
+                    <span className="bg-primary text-primary-foreground absolute top-1 right-1 flex size-3.5 items-center justify-center rounded-full text-[9px] font-semibold">
+                      {notificationData.unreadCount > 9
+                        ? "9+"
+                        : notificationData.unreadCount}
+                    </span>
+                  ) : null}
+                </Button>
+              }
+            >
+              <NotificationPanel
+                notifications={notificationData?.items ?? []}
+                unreadCount={notificationData?.unreadCount ?? 0}
+                isLoading={notificationsQuery.isLoading}
+                isError={notificationsQuery.isError}
+                onRead={(notification) => {
+                  markReadMutation.mutate({
+                    notificationId: notification.id,
+                    isRead: true,
+                  });
+                }}
+              />
+            </ResponsiveActionPanel>
+            <ResponsiveActionPanel
+              title="Appearance"
+              description="Choose Light or Dark mode"
+              trigger={
+                <Button variant="ghost" size="icon" aria-label="Appearance">
+                  <Palette className="size-4" />
+                </Button>
+              }
+            >
+              <AppearancePanel />
+            </ResponsiveActionPanel>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

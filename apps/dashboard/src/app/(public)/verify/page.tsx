@@ -22,6 +22,11 @@ function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const requestedNext = searchParams.get("next");
+  const nextPath =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/";
 
   const [state, setState] = useState<VerifyState>("verifying");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -60,7 +65,7 @@ function VerifyContent() {
           setState("success");
           // Redirect after short delay so user sees confirmation
           setTimeout(() => {
-            router.push("/");
+            router.push(nextPath);
           }, 1200);
         }
       } catch {

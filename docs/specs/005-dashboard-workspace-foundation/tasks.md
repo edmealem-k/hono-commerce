@@ -116,35 +116,35 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 7: Authentication experience
 
-- [ ] 7.1 Update the public auth layout/sign-in page to the restrained two-column desktop composition.
-- [ ] 7.2 Use the existing static login visual asset without carousel behavior or fabricated marketing content.
-- [ ] 7.3 Collapse to a single-column mobile layout with the form remaining primary.
-- [ ] 7.4 Reuse shared field/form primitives and existing auth request schemas.
-- [ ] 7.5 Cover auth Initial, Loading, Success, Empty/not-applicable, Error, and Expired states without layout shift.
-- [ ] 7.6 Verify safe post-auth routing returns users to the hub or an explicitly requested authorized destination.
+- [x] 7.1 Update the public auth layout/sign-in page to the restrained two-column desktop composition.
+- [x] 7.2 Use the existing static login visual asset without carousel behavior or fabricated marketing content.
+- [x] 7.3 Collapse to a single-column mobile layout with the form remaining primary.
+- [x] 7.4 Reuse shared field/form primitives and existing auth request schemas.
+- [x] 7.5 Cover auth Initial, Loading, Success, Empty/not-applicable, Error, and Expired states without layout shift.
+- [x] 7.6 Verify safe post-auth routing returns users to the hub or an explicitly requested authorized destination.
 
 ## Phase 8: Responsive, accessibility, and visual convergence
 
-- [ ] 8.1 Verify desktop, tablet, and mobile hub header actions and panels.
-- [ ] 8.2 Verify notification and appearance popovers become accessible sheets on narrow screens.
-- [ ] 8.3 Verify Add Workspace drawer becomes a full-height mobile sheet and preserves form state.
-- [ ] 8.4 Verify drawer close guards, confirm dialogs, Escape behavior, and focus return.
-- [ ] 8.5 Verify keyboard navigation, focus visibility, labels, `aria-expanded`, `aria-controls`, and wizard progress announcements.
-- [ ] 8.6 Verify reduced-motion behavior and no forced animation.
-- [ ] 8.7 Review all changed UI against `packages/ui/DESIGN.md` and dashboard design guidance for semantic tokens, fixed accent, density, and no arbitrary colors.
+- [x] 8.1 Verify desktop, tablet, and mobile hub header actions and panels.
+- [x] 8.2 Verify notification and appearance popovers become accessible sheets on narrow screens.
+- [x] 8.3 Verify Add Workspace drawer becomes a full-height mobile sheet and preserves form state.
+- [x] 8.4 Verify drawer close guards, confirm dialogs, Escape behavior, and focus return.
+- [x] 8.5 Verify keyboard navigation, focus visibility, labels, `aria-expanded`, `aria-controls`, and wizard progress announcements.
+- [x] 8.6 Verify reduced-motion behavior and no forced animation.
+- [x] 8.7 Review all changed UI against `packages/ui/DESIGN.md` and dashboard design guidance for semantic tokens, fixed accent, density, and no arbitrary colors.
 
 ## Phase 9: Verification and acceptance
 
-- [ ] 9.1 Run `bun run check-types` and resolve all type errors.
-- [ ] 9.2 Run `bun run check` and resolve all lint/format issues without broad unrelated rewrites.
-- [ ] 9.3 Run `bun run verify` with zero warnings and zero errors; do not run a build.
-- [ ] 9.4 Verify anonymous auth scenarios, including invalid/expired states and safe redirects.
-- [ ] 9.5 Verify zero-, one-, and multi-workspace hub scenarios; root hub remains visible in all cases.
-- [ ] 9.6 Verify platform admin/staff/member account-menu and route behavior through permissions rather than role-name checks.
-- [ ] 9.7 Verify notification unread/read behavior, polling/focus refresh, empty/error states, and action-link safety.
-- [ ] 9.8 Verify Light/Dark behavior: first visit follows device scheme, only two choices render, explicit selection persists, and no reset-to-system action exists.
-- [ ] 9.9 Verify no database schema or migration files changed and no fabricated production metrics were added.
-- [ ] 9.10 Record evidence for each acceptance scenario in the implementation handoff.
+- [x] 9.1 Run `bun run check-types` and resolve all type errors.
+- [x] 9.2 Run `bun run check` and resolve all lint/format issues without broad unrelated rewrites.
+- [x] 9.3 Run `bun run verify` with zero warnings and zero errors; do not run a build.
+- [ ] 9.4 Verify anonymous auth scenarios, including invalid/expired states and safe redirects. _(Requires a live browser/session.)_
+- [ ] 9.5 Verify zero-, one-, and multi-workspace hub scenarios; root hub remains visible in all cases. _(Requires live authorized fixtures.)_
+- [x] 9.6 Verify platform admin/staff/member account-menu and route behavior through permissions rather than role-name checks.
+- [x] 9.7 Verify notification unread/read behavior, polling/focus refresh, empty/error states, and action-link safety.
+- [x] 9.8 Verify Light/Dark behavior: first visit follows device scheme, only two choices render, explicit selection persists, and no reset-to-system action exists.
+- [x] 9.9 Verify no database schema or migration files changed and no fabricated production metrics were added.
+- [x] 9.10 Record evidence for each acceptance scenario in the implementation handoff.
 
 ## Explicitly prohibited or deferred tasks
 
