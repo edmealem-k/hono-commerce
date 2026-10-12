@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import type { ReactNode } from "react";
 
@@ -12,15 +11,17 @@ export default function PublicAuthLayout({
     <div className="bg-background min-h-svh lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <main className="flex min-h-svh flex-col px-4 py-6 sm:px-8 lg:px-16 lg:py-10">
         <header className="flex items-center">
-          <Link
-            href="/"
-            className="text-foreground inline-flex items-center gap-2 text-lg font-semibold tracking-tight"
-          >
-            <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg font-bold">
-              H
-            </span>
+          <div className="text-foreground inline-flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <Image
+              src="/brand/hono-commerce-mark.svg"
+              alt="Hono Commerce"
+              width={32}
+              height={32}
+              priority
+              unoptimized
+            />
             Hono Commerce
-          </Link>
+          </div>
         </header>
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-md">{children}</div>
@@ -35,6 +36,7 @@ export default function PublicAuthLayout({
           alt="A calm commerce workspace illustration"
           fill
           priority
+          unoptimized
           className="object-cover"
           sizes="(min-width: 1024px) 55vw, 0vw"
         />

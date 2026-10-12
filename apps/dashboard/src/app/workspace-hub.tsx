@@ -21,6 +21,7 @@ import { Card, CardContent } from "@hono-commerce/ui/components/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -50,6 +51,8 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type WorkspaceData = NonNullable<WorkspacesResponse["data"]>;
 type WorkspaceEntry = WorkspaceData["workspaces"][number];
@@ -59,17 +62,28 @@ export function WorkspaceHub({
 }: {
   initialData: WorkspacesResponse | null;
 }) {
-  const workspacesQuery = useWorkspacesQuery(initialData);
-  const notificationsQuery = useNotificationsQuery();
-  const markReadMutation = useMarkNotificationReadMutation();
-  const { openDrawer } = useDrawer();
+  const router = useRouter();
   const session = authClient.useSession();
   const user = session.data?.user;
   const sessionExpired = !session.isPending && !session.data;
+  const workspacesQuery = useWorkspacesQuery(initialData, {
+    enabled: Boolean(user),
+  });
+  const notificationsQuery = useNotificationsQuery(undefined, {
+    enabled: Boolean(user),
+  });
+  const markReadMutation = useMarkNotificationReadMutation();
+  const { openDrawer } = useDrawer();
   const userName = user?.name || user?.email || "Account";
   const initials = userName.slice(0, 1).toUpperCase();
   const workspaceData = workspacesQuery.data?.data;
   const notificationData = notificationsQuery.data?.data;
+
+  useEffect(() => {
+    if (sessionExpired) {
+      router.replace("/sign-in?callbackUrl=/");
+    }
+  }, [router, sessionExpired]);
 
   const openCreateWorkspace = () => {
     openDrawer({
@@ -174,14 +188,16 @@ export function WorkspaceHub({
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <p className="truncate text-xs font-semibold">{userName}</p>
-                  {user?.email && (
-                    <p className="text-muted-foreground truncate text-[11px] font-normal">
-                      {user.email}
-                    </p>
-                  )}
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    <p className="truncate text-xs font-semibold">{userName}</p>
+                    {user?.email && (
+                      <p className="text-muted-foreground truncate text-[11px] font-normal">
+                        {user.email}
+                      </p>
+                    )}
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem render={<Link href="/" />}>
                   <UserRound className="size-4" />

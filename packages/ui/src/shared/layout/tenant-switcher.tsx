@@ -4,6 +4,7 @@ import { Button } from "@hono-commerce/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -72,30 +73,32 @@ export function TenantSwitcher({
         }
       />
       <DropdownMenuContent align="start" className="w-56 p-1.5">
-        <DropdownMenuLabel className="text-muted-foreground px-2 py-1 text-[10px] font-bold tracking-wider uppercase">
-          Your Stores & Brands
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {tenants.map((tenant) => {
-          const isSelected = tenant.id === activeTenant?.id;
-          return (
-            <DropdownMenuItem
-              key={tenant.id}
-              onClick={() => onSelectTenant(tenant)}
-              className="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{tenant.name}</p>
-                <p className="text-muted-foreground truncate text-[10px]">
-                  {tenant.slug}
-                </p>
-              </div>
-              {isSelected && (
-                <CheckIcon className="text-primary ml-2 size-3.5 shrink-0" />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-muted-foreground px-2 py-1 text-[10px] font-bold tracking-wider uppercase">
+            Your Stores & Brands
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {tenants.map((tenant) => {
+            const isSelected = tenant.id === activeTenant?.id;
+            return (
+              <DropdownMenuItem
+                key={tenant.id}
+                onClick={() => onSelectTenant(tenant)}
+                className="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{tenant.name}</p>
+                  <p className="text-muted-foreground truncate text-[10px]">
+                    {tenant.slug}
+                  </p>
+                </div>
+                {isSelected && (
+                  <CheckIcon className="text-primary ml-2 size-3.5 shrink-0" />
+                )}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
         {onCreateTenant && (
           <>
             <DropdownMenuSeparator />

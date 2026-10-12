@@ -10,7 +10,10 @@ export type WorkspacesResponse = InferResponseType<
   200
 >;
 
-export function useWorkspacesQuery(initialData?: WorkspacesResponse | null) {
+export function useWorkspacesQuery(
+  initialData?: WorkspacesResponse | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ["workspaces"],
     queryFn: async () => {
@@ -20,6 +23,7 @@ export function useWorkspacesQuery(initialData?: WorkspacesResponse | null) {
       }
       return response.json();
     },
+    enabled: options?.enabled ?? true,
     initialData: initialData ?? undefined,
   });
 }

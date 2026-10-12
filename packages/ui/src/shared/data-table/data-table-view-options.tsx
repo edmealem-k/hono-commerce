@@ -4,6 +4,7 @@ import { Button } from "@hono-commerce/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -42,26 +43,28 @@ export function DataTableViewOptions<TData>({
         }
       />
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuLabel className="text-xs">
-          Toggle columns
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {columns.map((column: Column<TData>) => {
-          const isVisible = column.getIsVisible();
-          return (
-            <DropdownMenuItem
-              key={column.id}
-              className="flex items-center justify-between text-xs capitalize"
-              onClick={(e) => {
-                e.preventDefault();
-                column.toggleVisibility(!isVisible);
-              }}
-            >
-              <span>{column.id}</span>
-              {isVisible && <CheckIcon className="text-primary size-3.5" />}
-            </DropdownMenuItem>
-          );
-        })}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs">
+            Toggle columns
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {columns.map((column: Column<TData>) => {
+            const isVisible = column.getIsVisible();
+            return (
+              <DropdownMenuItem
+                key={column.id}
+                className="flex items-center justify-between text-xs capitalize"
+                onClick={(e) => {
+                  e.preventDefault();
+                  column.toggleVisibility(!isVisible);
+                }}
+              >
+                <span>{column.id}</span>
+                {isVisible && <CheckIcon className="text-primary size-3.5" />}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

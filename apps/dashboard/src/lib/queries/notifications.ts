@@ -12,6 +12,7 @@ export type NotificationsResponse = InferResponseType<
 
 export function useNotificationsQuery(
   initialData?: NotificationsResponse | null,
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: ["notifications", "me"],
@@ -26,6 +27,7 @@ export function useNotificationsQuery(
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
+    enabled: options?.enabled ?? true,
     initialData: initialData ?? undefined,
   });
 }

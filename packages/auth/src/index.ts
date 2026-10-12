@@ -38,8 +38,11 @@ export function createAuth() {
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    basePath: "/api/v1/auth",
     advanced: {
-      generateId: () => crypto.randomUUID(),
+      database: {
+        generateId: "uuid",
+      },
       defaultCookieAttributes: {
         sameSite: isProduction ? "none" : "lax",
         secure: isProduction,
