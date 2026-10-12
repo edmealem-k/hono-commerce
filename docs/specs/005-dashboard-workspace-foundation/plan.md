@@ -68,7 +68,7 @@ Platform admin has the platform wildcard through the canonical helper. Platform 
 
 ### 4.2 Request schemas
 
-Add `packages/types/src/schemas/workspace.ts` for the safe tenant slug/ID route parameter and any bounded workspace-list query. Add `packages/types/src/schemas/notification.ts` for list pagination, UUID notification parameters, and the `{ isRead: boolean }` update body. All limits are bounded and all IDs are validated with the existing UUID conventions.
+Add `packages/types/src/schemas/workspace.ts` for the safe tenant slug-or-UUID route parameter and any bounded workspace-list query. Tenant slugs must be lowercase DNS-safe identifiers with a maximum length of 63 characters. Add `packages/types/src/schemas/notification.ts` for list pagination, UUID notification parameters, and the `{ isRead: boolean }` update body. All limits are bounded and identifiers are validated before reaching handlers.
 
 Do not create response DTOs. Frontend types must use `InferResponseType` from the generated Hono client.
 
@@ -139,7 +139,7 @@ The existing `ResponsiveContentSidebarLayout`, `SidebarProvider`, `TenantSwitche
 
 ### 9.1 API bootstrap
 
-Create a server-side dashboard API helper that forwards the request cookie to the Hono client, uses `cache: "no-store"` for session/workspace/notification bootstrap data, and keeps endpoint return types inferred from `AppType`. Client TanStack Query hooks may hydrate from that bootstrap and use the existing 30-second stale time.
+Create `apps/dashboard/src/lib/api-server.ts` as a server-side dashboard API factory. It must forward the incoming request cookie, forward only verified tenant context, use `cache: "no-store"` for session/workspace/notification bootstrap data, and keep endpoint return types inferred from `AppType`. Client TanStack Query hooks may hydrate from that bootstrap and use the existing 30-second stale time. Do not expose auth credentials to the browser.
 
 ### 9.2 Hub
 

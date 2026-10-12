@@ -9,6 +9,7 @@ import { adminAc, userAc } from "better-auth/plugins/admin/access";
 
 export function createAuth() {
   const db = createDb();
+  const isProduction = env.NODE_ENV === "production";
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -34,8 +35,8 @@ export function createAuth() {
     advanced: {
       generateId: () => crypto.randomUUID(),
       defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
         httpOnly: true,
       },
     },

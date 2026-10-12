@@ -15,15 +15,16 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 1: Shared contracts and permissions
 
-- [ ] 1.1 Define the canonical permission key union and registry for platform and tenant permissions.
-- [ ] 1.2 Update the role-to-permission map so platform admin, platform staff, tenant owner, and tenant member resolve through the canonical helper.
-- [ ] 1.3 Add `MODERATION:READ`, `QUEUES:READ`, and `PLATFORM:SETTINGS` without exposing routes that do not yet exist.
-- [ ] 1.4 Remove or redirect duplicate permission maps in `packages/ui/src/shared/auth/permission-gate.tsx`.
-- [ ] 1.5 Add workspace request schemas under `packages/types/src/schemas/workspace.ts`.
-- [ ] 1.6 Add notification list, notification ID, and read-state request schemas under `packages/types/src/schemas/notification.ts`.
-- [ ] 1.7 Export the new schemas and permission types through the appropriate package index files.
-- [ ] 1.8 Add only the approved dashboard UI route keys to `packages/types/src/routes/catalog.ts`; do not add API paths there.
-- [ ] 1.9 Verify the contracts compile without response DTOs, `any`, `unknown`, or type-silencing assertions.
+- [x] 1.1 Define the canonical permission key union and registry for platform and tenant permissions.
+- [x] 1.2 Update the role-to-permission map so platform admin, platform staff, tenant owner, and tenant member resolve through the canonical helper.
+- [x] 1.3 Add `MODERATION:READ`, `QUEUES:READ`, and `PLATFORM:SETTINGS` without exposing routes that do not yet exist.
+- [x] 1.4 Remove or redirect duplicate permission maps in `packages/ui/src/shared/auth/permission-gate.tsx`.
+- [x] 1.5 Add workspace request schemas under `packages/types/src/schemas/workspace.ts`.
+- [x] 1.6 Add notification list, notification ID, and read-state request schemas under `packages/types/src/schemas/notification.ts`.
+- [x] 1.7 Export the new schemas and permission types through the appropriate package index files.
+- [x] 1.8 Accept either a validated UUID or DNS-safe tenant slug for workspace tenant identifiers.
+- [ ] 1.9 Add only the approved dashboard UI route keys to `packages/types/src/routes/catalog.ts`; do not add API paths there.
+- [ ] 1.10 Verify the contracts compile without response DTOs, `any`, `unknown`, or type-silencing assertions.
 
 ## Phase 2: Better Auth, session, and host safety
 
@@ -90,7 +91,7 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 5: Dashboard API/bootstrap and hub
 
-- [ ] 5.1 Add a server-side dashboard API helper that forwards request cookies and uses `cache: "no-store"` for session/workspace bootstrap.
+- [ ] 5.1 Add `apps/dashboard/src/lib/api-server.ts` that forwards request cookies, forwards only verified tenant context, and uses `cache: "no-store"` for session/workspace bootstrap.
 - [ ] 5.2 Add typed TanStack Query hooks for workspaces and notifications using generated endpoint inference.
 - [ ] 5.3 Replace scaffold `apps/dashboard/src/app/page.tsx` with the always-visible workspace manager hub.
 - [ ] 5.4 Render authorized workspace cards with identity, type/role, enter action, and only real overflow actions.
