@@ -69,27 +69,27 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ### Workspace shell
 
-- [ ] 4.1 Create `shared/workspace-shell/` types and route-agnostic shell composition.
-- [ ] 4.2 Implement `WorkspaceHeader` with title/breadcrumb content and explicit notification/account/appearance action slots.
-- [ ] 4.3 Implement `WorkspaceBreadcrumbs` with accessible labels and a neutral root state.
-- [ ] 4.4 Implement shared shell loading skeletons without layout shift.
-- [ ] 4.5 Ensure the shared header has no search, command, chat, or AI affordance.
+- [x] 4.1 Create `shared/workspace-shell/` types and route-agnostic shell composition.
+- [x] 4.2 Implement `WorkspaceHeader` with title/breadcrumb content and explicit notification/account/appearance action slots.
+- [x] 4.3 Implement `WorkspaceBreadcrumbs` with accessible labels and a neutral root state.
+- [x] 4.4 Implement shared shell loading skeletons without layout shift.
+- [x] 4.5 Ensure the shared header has no search, command, chat, or AI affordance.
 
 ### Notifications and appearance
 
-- [ ] 4.6 Create notification button, unread badge, panel, item, empty, loading, error, and expired presentations.
-- [ ] 4.7 Render notification action links only after safe-origin validation and preserve focus behavior.
-- [ ] 4.8 Create the appearance panel using a Light/Dark toggle group only.
-- [ ] 4.9 Ensure first visit follows the device scheme internally while never rendering “System” as an option.
-- [ ] 4.10 Preserve Electric Indigo and semantic status tokens regardless of appearance choice.
+- [x] 4.6 Create notification panel, unread badge, item, empty, loading, error, and expired presentations.
+- [x] 4.7 Render notification action links only after safe-origin validation and preserve focus behavior.
+- [x] 4.8 Create the appearance panel using a Light/Dark toggle group only.
+- [x] 4.9 Ensure first visit follows the device scheme internally while never rendering “System” as an option.
+- [x] 4.10 Preserve Electric Indigo and semantic status tokens regardless of appearance choice.
 
 ### Drawer, multistep, and modal foundations
 
-- [ ] 4.11 Extend `GlobalDrawer`/`useDrawer` with a close-request guard, stable stack behavior, Escape handling, and focus return.
-- [ ] 4.12 Define a typed multistep drawer contract with current step, navigation guards, submit state, and close-request handling.
-- [ ] 4.13 Reuse existing Base UI Sheet/Dialog primitives and remove inline z-index/layout coupling from the new behavior.
-- [ ] 4.14 Preserve existing `GlobalModal`, `ConfirmDialog`, `GlobalSplitView`, and responsive content-sidebar APIs.
-- [ ] 4.15 Verify shared UI uses Base UI `render`, semantic tokens, and no raw HTML controls where primitives exist.
+- [x] 4.11 Extend `GlobalDrawer`/`useDrawer` with a close-request guard, stable stack behavior, Escape handling, and focus return.
+- [x] 4.12 Define a typed multistep drawer contract with current step, navigation guards, submit state, and close-request handling.
+- [x] 4.13 Reuse existing Base UI Sheet/Dialog primitives and remove inline z-index/layout coupling from the new behavior.
+- [x] 4.14 Preserve existing `GlobalModal`, `ConfirmDialog`, `GlobalSplitView`, and responsive content-sidebar APIs.
+- [x] 4.15 Verify shared UI uses Base UI `render`, semantic tokens, and no raw HTML controls where primitives exist.
 - [ ] 4.16 Verify all form surfaces use `Field`/`FieldGroup`, visible labels, `zodResolver`, and typed TanStack Query mutations; reject ad-hoc payload construction.
 
 ## Phase 5: Dashboard API/bootstrap and hub

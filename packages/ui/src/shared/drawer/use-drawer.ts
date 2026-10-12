@@ -20,6 +20,7 @@ export interface DrawerConfig {
   resizeStorageKey?: string;
   naked?: boolean;
   className?: string;
+  onRequestClose?: () => boolean | Promise<boolean>;
 }
 
 interface DrawerState {
