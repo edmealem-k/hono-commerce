@@ -216,7 +216,13 @@ export function WorkspaceHub({
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void authClient.signOut()}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    void authClient.signOut().then(() => {
+                      window.location.assign("/sign-in");
+                    });
+                  }}
+                >
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>

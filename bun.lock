@@ -49,6 +49,7 @@
       "name": "dashboard",
       "version": "0.1.0",
       "dependencies": {
+        "@hono-commerce/auth": "workspace:*",
         "@hono-commerce/env": "workspace:*",
         "@hono-commerce/types": "workspace:*",
         "@hono-commerce/ui": "workspace:*",

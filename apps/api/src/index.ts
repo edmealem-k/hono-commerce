@@ -1,5 +1,4 @@
-import { auth } from "@hono-commerce/auth";
-import { env } from "@hono-commerce/env/api";
+import { auth, authOriginPolicy } from "@hono-commerce/auth";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
@@ -19,11 +18,10 @@ app.use(
   "/*",
   cors({
     origin: (origin) => {
-      const allowedOrigins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || authOriginPolicy.isAllowed(origin)) {
         return origin;
       }
-      return allowedOrigins[0];
+      return undefined;
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
@@ -41,7 +39,7 @@ const routes = app
   .route("/tenants", tenantsRouter)
   .route("/users", usersRouter);
 
-app.on(["POST", "GET"], "/api/v1/auth/*", (c) => auth.handler(c.req.raw));
+app.all("/api/v1/auth/*", (c) => auth.handler(c.req.raw));
 app.route("/admin/queues", queuesRouter);
 app.get("/admin/queues/", (c) => c.redirect("/admin/queues", 301));
 

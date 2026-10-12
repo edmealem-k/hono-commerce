@@ -12,6 +12,9 @@ export default async function DashboardWorkspaceManager() {
   if (responseStatus === 401) {
     redirect("/sign-in?callbackUrl=/");
   }
+  if (responseStatus !== 200) {
+    throw new Error("Unable to load the authenticated workspace manager");
+  }
   const initialData: WorkspacesResponse | null = response.ok
     ? await response.json()
     : null;

@@ -1,7 +1,7 @@
 import { createServerApi } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 
-import { SignInForm } from "./sign-in-form";
+import { AccountUnavailable, SignInForm } from "./sign-in-form";
 
 function getSafeCallbackPath(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -23,6 +23,14 @@ export default async function SignInPage({
 
   if (responseStatus === 200) {
     redirect(callbackPath);
+  }
+
+  if (responseStatus === 403) {
+    return <AccountUnavailable />;
+  }
+
+  if (responseStatus !== 401) {
+    throw new Error("Unable to verify the current authentication state");
   }
 
   return <SignInForm callbackPath={callbackPath} initialEmail={email ?? ""} />;

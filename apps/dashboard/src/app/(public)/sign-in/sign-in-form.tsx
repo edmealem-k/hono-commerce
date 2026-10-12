@@ -28,9 +28,14 @@ import {
 import { Input } from "@hono-commerce/ui/components/input";
 import { Spinner } from "@hono-commerce/ui/components/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, ArrowRight, CheckCircle2, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  LockKeyhole,
+  Mail,
+} from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 type RequestStatus = "idle" | "loading" | "error" | "success";
@@ -42,8 +47,6 @@ export function SignInForm({
   callbackPath: string;
   initialEmail: string;
 }) {
-  const router = useRouter();
-  const session = authClient.useSession();
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<MagicLinkSignInInput>({
@@ -51,12 +54,6 @@ export function SignInForm({
     defaultValues: { email: initialEmail },
     mode: "onTouched",
   });
-
-  useEffect(() => {
-    if (!session.isPending && session.data?.user) {
-      router.replace(callbackPath);
-    }
-  }, [callbackPath, router, session.data?.user, session.isPending]);
 
   async function handleSubmit(values: MagicLinkSignInInput) {
     setStatus("loading");
@@ -101,9 +98,9 @@ export function SignInForm({
           <Alert>
             <Mail />
             <AlertTitle>Use the link to continue</AlertTitle>
-            <AlertDescription>
-              Check your spam folder if the message does not arrive shortly.
-            </AlertDescription>
+            {/* <AlertDescription> */}
+            {/*   Check your spam folder if the message does not arrive shortly. */}
+            {/* </AlertDescription> */}
           </Alert>
         </CardContent>
         <CardFooter>
@@ -180,6 +177,47 @@ export function SignInForm({
           </p>
         </CardFooter>
       </form>
+    </Card>
+  );
+}
+
+export function AccountUnavailable() {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    await authClient.signOut();
+    window.location.assign("/sign-in");
+  }
+
+  return (
+    <Card>
+      <CardHeader className="text-center">
+        <div className="bg-destructive/10 text-destructive mx-auto flex size-10 items-center justify-center rounded-lg">
+          <LockKeyhole className="size-5" />
+        </div>
+        <CardTitle>Account unavailable</CardTitle>
+        <CardDescription>
+          This account is suspended or deactivated. Contact platform support if
+          you believe this is a mistake.
+        </CardDescription>
+      </CardHeader>
+      <CardFooter>
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={isSigningOut}
+          onClick={() => void handleSignOut()}
+        >
+          {isSigningOut ? (
+            <>
+              <Spinner data-icon="inline-start" /> Signing out...
+            </>
+          ) : (
+            "Sign out"
+          )}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

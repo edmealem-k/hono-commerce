@@ -1,6 +1,4 @@
-"use client";
-
-import { authClient } from "@/lib/auth-client";
+import { createServerApi } from "@/lib/api-server";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
   Card,
@@ -9,96 +7,70 @@ import {
   CardHeader,
   CardTitle,
 } from "@hono-commerce/ui/components/card";
-import { Spinner } from "@hono-commerce/ui/components/spinner";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { redirect } from "next/navigation";
 
-function getSafeNextPath(value: string | null) {
+import { AccountUnavailable } from "../sign-in/sign-in-form";
+
+function getSafeNextPath(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
     return "/";
   }
   return value;
 }
 
-function VerifyContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const session = authClient.useSession();
-  const nextPath = getSafeNextPath(searchParams.get("next"));
-  const verificationError = searchParams.get("error");
-
-  useEffect(() => {
-    if (!session.isPending && session.data?.user && !verificationError) {
-      router.replace(nextPath);
-    }
-  }, [
-    nextPath,
-    router,
-    session.data?.user,
-    session.isPending,
-    verificationError,
-  ]);
-
-  if (verificationError || (!session.isPending && !session.data?.user)) {
-    return (
-      <Card className="border-border/80 shadow-lg">
-        <CardHeader className="pb-2 text-center">
-          <div className="bg-destructive/10 text-destructive mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
-            <AlertCircle className="size-6" />
-          </div>
-          <CardTitle className="text-xl font-bold">
-            Verification failed
-          </CardTitle>
-          <CardDescription className="mt-1 text-sm">
-            This sign-in link is invalid or has expired. Request a new link to
-            continue.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="pt-4">
-          <Button
-            className="w-full"
-            nativeButton={false}
-            render={<Link href="/sign-in" />}
-          >
-            Request new sign-in link
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-
+function VerificationFailed() {
   return (
-    <Card className="border-border/80 py-6 text-center shadow-lg">
-      <CardHeader>
-        <div className="mx-auto mb-2 flex size-12 items-center justify-center">
-          <Spinner className="text-primary size-8" />
+    <Card className="border-border/80 shadow-lg">
+      <CardHeader className="pb-2 text-center">
+        <div className="bg-destructive/10 text-destructive mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
+          <AlertCircle className="size-6" />
         </div>
-        <CardTitle className="text-xl font-bold">
-          Completing your sign-in
-        </CardTitle>
-        <CardDescription className="text-sm">
-          Your email has been verified. Redirecting to your workspace…
+        <CardTitle className="text-xl font-bold">Verification failed</CardTitle>
+        <CardDescription className="mt-1 text-sm">
+          This sign-in link is invalid or has expired. Request a new link to
+          continue.
         </CardDescription>
       </CardHeader>
+      <CardFooter className="pt-4">
+        <Button
+          className="w-full"
+          nativeButton={false}
+          render={<Link href="/sign-in" />}
+        >
+          Request new sign-in link
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
 
-export default function VerifyPage() {
-  return (
-    <Suspense
-      fallback={
-        <Card className="border-border/80 py-6 text-center shadow-lg">
-          <CardHeader>
-            <Spinner className="text-primary mx-auto size-8" />
-            <CardTitle className="text-xl font-bold">Loading…</CardTitle>
-          </CardHeader>
-        </Card>
-      }
-    >
-      <VerifyContent />
-    </Suspense>
-  );
+export default async function VerifyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; next?: string }>;
+}) {
+  const { error, next } = await searchParams;
+  if (error) {
+    return <VerificationFailed />;
+  }
+
+  const api = await createServerApi();
+  const response = await api.users.me.workspaces.$get();
+  const responseStatus: number = response.status;
+
+  if (responseStatus === 200) {
+    redirect(getSafeNextPath(next));
+  }
+
+  if (responseStatus === 403) {
+    return <AccountUnavailable />;
+  }
+
+  if (responseStatus === 401) {
+    return <VerificationFailed />;
+  }
+
+  throw new Error("Unable to verify the completed sign-in");
 }

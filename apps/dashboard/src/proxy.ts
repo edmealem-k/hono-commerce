@@ -16,6 +16,12 @@ const RESERVED_SUBDOMAINS = new Set([
 
 const PUBLIC_PATHS = ["/sign-in", "/verify", "/invitations"];
 
+function isPublicPath(pathname: string) {
+  return PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
 export function proxy(req: NextRequest) {
   const host =
     req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
@@ -38,7 +44,7 @@ export function proxy(req: NextRequest) {
   }
 
   // Public routes bypass tenant rewriting and serve directly from /(public)
-  if (PUBLIC_PATHS.some((path) => url.pathname.startsWith(path))) {
+  if (isPublicPath(url.pathname)) {
     return NextResponse.next({
       request: { headers: requestHeaders },
     });

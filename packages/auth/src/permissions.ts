@@ -39,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     "AUDIT:READ",
   ],
   owner: [
+    "TENANT:READ",
     "TENANT:UPDATE",
     "TENANT:MANAGE",
     "TENANT:BILLING",
@@ -55,6 +56,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     "ANALYTICS:READ",
   ],
   member: [
+    "TENANT:READ",
     "CATALOG:READ",
     "CATALOG:WRITE",
     "CATALOG:MANAGE",

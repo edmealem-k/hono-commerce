@@ -16,10 +16,7 @@ export async function dispatchEmail({
 }): Promise<void> {
   if (env.NODE_ENV === "development" || !env.RESEND_API_KEY) {
     logEmailToConsole({
-      to: data.to,
-      subject: data.subject,
-      template: data.template,
-      props: data.props,
+      ...data,
       text,
     });
 

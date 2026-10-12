@@ -8,10 +8,16 @@ import { createAuthClient } from "better-auth/react";
 
 import { getServerUrl } from "./server-url";
 
+import type { auth } from "@hono-commerce/auth";
+
 export const authClient = createAuthClient({
   baseURL: new URL(
     "/api/v1/auth",
     getServerUrl(env.NEXT_PUBLIC_SERVER_URL),
   ).toString(),
-  plugins: [magicLinkClient(), adminClient(), customSessionClient()],
+  plugins: [
+    magicLinkClient(),
+    adminClient(),
+    customSessionClient<typeof auth>(),
+  ],
 });

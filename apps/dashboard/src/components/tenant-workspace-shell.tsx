@@ -8,9 +8,11 @@ import { Package, ShoppingCart, Users, Store } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export function TenantWorkspaceShell({
+  name,
   slug,
   children,
 }: {
+  name: string;
   slug: string;
   children: React.ReactNode;
 }) {
@@ -32,7 +34,7 @@ export function TenantWorkspaceShell({
   return (
     <WorkspaceSidebarShell
       brand={{
-        name: slug,
+        name,
         description: "Merchant workspace",
         mark: slug.slice(0, 1).toUpperCase() || "S",
       }}
