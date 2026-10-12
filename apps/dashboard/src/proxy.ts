@@ -1,3 +1,4 @@
+import { env } from "@hono-commerce/env/dashboard";
 import { NextResponse, type NextRequest } from "next/server";
 
 const TENANT_SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -19,11 +20,22 @@ export function proxy(req: NextRequest) {
   const host =
     req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const hostname = host.split(":")[0]?.toLowerCase() ?? "";
+  const rootHostname = env.NEXT_PUBLIC_ROOT_DOMAIN.split(":")[0]?.toLowerCase();
   const url = req.nextUrl.clone();
+
+  if (
+    rootHostname &&
+    hostname !== rootHostname &&
+    !hostname.endsWith(`.${rootHostname}`)
+  ) {
+    return new NextResponse("Unrecognized dashboard host", { status: 400 });
+  }
 
   // Strip any client-supplied tenant headers to prevent header injection
   const requestHeaders = new Headers(req.headers);
-  requestHeaders.delete("x-tenant-slug");
+  for (const header of ["x-tenant-slug", "x-org-slug", "x-current-path"]) {
+    requestHeaders.delete(header);
+  }
 
   // Public routes bypass tenant rewriting and serve directly from /(public)
   if (PUBLIC_PATHS.some((path) => url.pathname.startsWith(path))) {
@@ -44,7 +56,8 @@ export function proxy(req: NextRequest) {
   }
 
   // 2. Tenant Store Subdomain: [tenantSlug].localhost:3002 or [tenantSlug].yourdomain.com
-  const rawSubdomain = hostname.split(".")[0] ?? "";
+  const rawSubdomain =
+    hostname !== rootHostname ? (hostname.split(".")[0] ?? "") : "";
 
   if (rawSubdomain && !RESERVED_SUBDOMAINS.has(rawSubdomain)) {
     if (!TENANT_SLUG_REGEX.test(rawSubdomain)) {
@@ -61,6 +74,13 @@ export function proxy(req: NextRequest) {
 
     return NextResponse.rewrite(url, {
       request: { headers: requestHeaders },
+    });
+  }
+
+  const firstSegment = url.pathname.split("/")[1] ?? "";
+  if (firstSegment && TENANT_SLUG_REGEX.test(firstSegment)) {
+    return new NextResponse("Tenant context must come from a verified host", {
+      status: 404,
     });
   }
 

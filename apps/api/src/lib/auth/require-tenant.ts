@@ -1,3 +1,4 @@
+import { hasPermission } from "@hono-commerce/auth/permissions";
 import { and, db, eq } from "@hono-commerce/db";
 import { tenant, tenantMember } from "@hono-commerce/db/schema/tenant";
 
@@ -53,6 +54,8 @@ export function requireTenantContext(paramKey = "tenantId") {
       .where(isUuid ? eq(tenant.id, identifier) : eq(tenant.slug, identifier))
       .limit(1);
 
+    const isPlatformAdmin = hasPermission(user, "PLATFORM:SETTINGS");
+
     if (!tenantRecord) {
       return c.json(
         fail({
@@ -63,7 +66,7 @@ export function requireTenantContext(paramKey = "tenantId") {
       );
     }
 
-    if (tenantRecord.status !== "active" && user.role !== "admin") {
+    if (tenantRecord.status !== "active" && !isPlatformAdmin) {
       return c.json(
         fail({
           error: `Store is currently ${tenantRecord.status}`,
@@ -74,7 +77,7 @@ export function requireTenantContext(paramKey = "tenantId") {
     }
 
     // Platform admin has unrestricted tenant ownership
-    if (user.role === "admin") {
+    if (isPlatformAdmin) {
       const adminContext: TenantContext = {
         tenantId: tenantRecord.id,
         tenantSlug: tenantRecord.slug,

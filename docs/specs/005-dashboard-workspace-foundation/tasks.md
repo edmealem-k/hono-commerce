@@ -30,15 +30,15 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 2: Better Auth, session, and host safety
 
-- [ ] 2.1 Configure the Better Auth session extension so effective platform permissions are attached at the session boundary.
-- [ ] 2.2 Add the matching Better Auth client/session typing and ensure dashboard consumers can read the resolved permission array.
-- [ ] 2.3 Audit cookie attributes, trusted origins, and cross-subdomain settings for local and production URLs using existing typed environment variables.
-- [ ] 2.4 Add or update env schema/example entries only if the audit identifies a genuinely missing variable; do not reference raw undeclared environment variables.
-- [ ] 2.5 Refactor `require-permission` to use the canonical permission helper instead of inline role-name checks.
-- [ ] 2.6 Refactor tenant context resolution to use verified context and canonical permissions.
-- [ ] 2.7 Replace the production queue-monitoring role check with `QUEUES:READ`; keep any development bypass explicit and non-production.
-- [ ] 2.8 Harden dashboard proxy handling: strip untrusted tenant headers, set verified context only after validation, preserve root hub routing, and reject malformed tenant hosts.
-- [ ] 2.9 Verify safe auth callback/redirect behavior for anonymous and authenticated requests.
+- [x] 2.1 Configure the Better Auth session extension so effective platform permissions are attached at the session boundary.
+- [x] 2.2 Add the matching Better Auth client/session typing and ensure dashboard consumers can read the resolved permission array.
+- [x] 2.3 Audit cookie attributes, trusted origins, and cross-subdomain settings for local and production URLs using existing typed environment variables.
+- [x] 2.4 Add or update env schema/example entries only if the audit identifies a genuinely missing variable; do not reference raw undeclared environment variables.
+- [x] 2.5 Refactor `require-permission` to use the canonical permission helper instead of inline role-name checks.
+- [x] 2.6 Refactor tenant context resolution to use verified context and canonical permissions.
+- [x] 2.7 Replace the production queue-monitoring role check with `QUEUES:READ`; keep any development bypass explicit and non-production.
+- [x] 2.8 Harden dashboard proxy handling: strip untrusted tenant headers, set verified context only after validation, preserve root hub routing, and reject malformed tenant hosts.
+- [x] 2.9 Verify safe auth callback/redirect behavior for anonymous and authenticated requests.
 
 ## Phase 3: API vertical slices
 

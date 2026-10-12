@@ -67,6 +67,12 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   customer: ["CUSTOMERS:READ", "ORDERS:READ"],
 };
 
+export function getPermissionsForRole(
+  role: string | null | undefined,
+): string[] {
+  return [...(ROLE_PERMISSIONS[role ?? ""] ?? [])];
+}
+
 /**
  * Role & permission evaluator.
  * Matches explicit user permissions or role-based permission grants.

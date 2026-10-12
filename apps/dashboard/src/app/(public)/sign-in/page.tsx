@@ -22,7 +22,12 @@ type RequestStatus = "idle" | "loading" | "error" | "success";
 function SignInContent() {
   const searchParams = useSearchParams();
   const initialEmail = searchParams?.get("email") || "";
-  const callbackUrl = searchParams?.get("callbackUrl") || "/verify";
+  const requestedCallbackUrl = searchParams?.get("callbackUrl");
+  const callbackUrl =
+    requestedCallbackUrl?.startsWith("/") &&
+    !requestedCallbackUrl.startsWith("//")
+      ? requestedCallbackUrl
+      : "/verify";
 
   const [email, setEmail] = useState(initialEmail);
   const [name, setName] = useState("");

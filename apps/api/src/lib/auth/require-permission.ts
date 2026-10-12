@@ -27,12 +27,6 @@ export function requirePermission(permission: string) {
       );
     }
 
-    // Platform admin has full access
-    if (user.role === "admin") {
-      await next();
-      return;
-    }
-
     // If route has tenant context attached, evaluate merchant role
     const tenantContext = c.get("tenant");
     const evaluatedRole = tenantContext?.role || user.role;

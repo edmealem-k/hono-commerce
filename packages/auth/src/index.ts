@@ -1,11 +1,13 @@
-import { createDb } from "@hono-commerce/db";
+import { createDb, eq } from "@hono-commerce/db";
 import * as authSchema from "@hono-commerce/db/schema/auth";
 import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, magicLink } from "better-auth/plugins";
+import { admin, customSession, magicLink } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
+
+import { getPermissionsForRole } from "./permissions";
 
 export function createAuth() {
   const db = createDb();
@@ -24,6 +26,10 @@ export function createAuth() {
     },
     user: {
       additionalFields: {
+        role: {
+          type: "string",
+          defaultValue: "customer",
+        },
         status: {
           type: "string",
           defaultValue: "active",
@@ -63,6 +69,28 @@ export function createAuth() {
           staff: adminAc,
           customer: userAc,
         },
+      }),
+      customSession(async ({ user, session }) => {
+        const [userRecord] = await db
+          .select({
+            role: authSchema.user.role,
+            status: authSchema.user.status,
+            banned: authSchema.user.banned,
+          })
+          .from(authSchema.user)
+          .where(eq(authSchema.user.id, user.id))
+          .limit(1);
+
+        return {
+          user: {
+            ...user,
+            role: userRecord?.role ?? "customer",
+            status: userRecord?.status ?? "active",
+            banned: userRecord?.banned ?? false,
+            permissions: getPermissionsForRole(userRecord?.role),
+          },
+          session,
+        };
       }),
     ],
   });
