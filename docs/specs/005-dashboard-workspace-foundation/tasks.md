@@ -44,26 +44,26 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ### Users and workspaces
 
-- [ ] 3.1 Create `apps/api/src/modules/users/` module structure with one handler per operation and a declarative routes file.
-- [ ] 3.2 Implement `GET /api/v1/users/me/workspaces` using the authenticated user’s tenant memberships and platform eligibility.
-- [ ] 3.3 Ensure the workspace list contains structural identity/role data only and never fabricated metrics.
-- [ ] 3.4 Mount the users router under `/api/v1` and preserve the exported `AppType`.
+- [x] 3.1 Create `apps/api/src/modules/users/` module structure with one handler per operation and a declarative routes file.
+- [x] 3.2 Implement `GET /api/v1/users/me/workspaces` using the authenticated user’s tenant memberships and platform eligibility.
+- [x] 3.3 Ensure the workspace list contains structural identity/role data only and never fabricated metrics.
+- [x] 3.4 Mount the users router under `/api/v1` and preserve the exported `AppType`.
 
 ### Tenant workspace
 
-- [ ] 3.5 Implement `GET /api/v1/tenants/:tenantId/workspace` in a focused tenant handler.
-- [ ] 3.6 Apply authentication, verified tenant context, tenant-read permission, and tenant-scoped query filtering.
-- [ ] 3.7 Return the standard success/error envelope through `ok`, `fail`, and validation helpers.
+- [x] 3.5 Implement `GET /api/v1/tenants/:tenantId/workspace` in a focused tenant handler.
+- [x] 3.6 Apply authentication, verified tenant context, tenant-read permission, and tenant-scoped query filtering.
+- [x] 3.7 Return the standard success/error envelope through `ok`, `fail`, and validation helpers.
 
 ### Notifications
 
-- [ ] 3.8 Implement `GET /api/v1/users/me/notifications` with bounded pagination, recent items, and unread count.
-- [ ] 3.9 Implement `PATCH /api/v1/users/me/notifications/:notificationId` for read-state changes only.
-- [ ] 3.10 Enforce authenticated-user ownership and tenant scope where notification records contain tenant context.
-- [ ] 3.11 Sanitize or reject notification action URLs outside approved application origins.
-- [ ] 3.12 Do not implement mark-all, delete, WebSocket delivery, or a view-all inbox route in this feature.
-- [ ] 3.13 Verify all API responses use the standard envelope and that no manual response DTOs are introduced.
-- [ ] 3.14 Verify generated Hono client methods and response inference from `AppType`.
+- [x] 3.8 Implement `GET /api/v1/users/me/notifications` with bounded pagination, recent items, and unread count.
+- [x] 3.9 Implement `PATCH /api/v1/users/me/notifications/:notificationId` for read-state changes only.
+- [x] 3.10 Enforce authenticated-user ownership and tenant scope where notification records contain tenant context.
+- [x] 3.11 Sanitize or reject notification action URLs outside approved application origins.
+- [x] 3.12 Do not implement mark-all, delete, WebSocket delivery, or a view-all inbox route in this feature.
+- [x] 3.13 Verify all API responses use the standard envelope and that no manual response DTOs are introduced.
+- [x] 3.14 Verify generated Hono client methods and response inference from `AppType`.
 
 ## Phase 4: Shared UI systems (`packages/ui`)
 

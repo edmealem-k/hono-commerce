@@ -9,6 +9,7 @@ import { fail } from "./lib/response";
 import { invitationsRouter } from "./modules/invitations/invitations.routes";
 import { storageRouter } from "./modules/storage/storage.routes";
 import { tenantsRouter } from "./modules/tenants/tenants.routes";
+import { usersRouter } from "./modules/users/users.routes";
 import { queuesRouter } from "./routes/admin/queues";
 
 const app = new Hono();
@@ -37,7 +38,8 @@ const routes = app
   })
   .route("/storage", storageRouter)
   .route("/invitations", invitationsRouter)
-  .route("/tenants", tenantsRouter);
+  .route("/tenants", tenantsRouter)
+  .route("/users", usersRouter);
 
 app.on(["POST", "GET"], "/api/v1/auth/*", (c) => auth.handler(c.req.raw));
 app.route("/admin/queues", queuesRouter);
