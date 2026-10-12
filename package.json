@@ -32,6 +32,7 @@
       "@hookform/resolvers": "^5.9.1",
       "react-hook-form": "^7.86.0",
       "nextjs-toploader": "^3.9.17",
+      "nuqs": "^2.10.2",
       "bullmq": "^5.41.0",
       "ioredis": "^5.4.1",
       "resend": "^4.1.2",

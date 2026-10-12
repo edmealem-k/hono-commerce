@@ -84,6 +84,9 @@ This document contains mandatory rules for frontend development, component compo
 - **Frontend RPC Client**: Always use `apiClient` from `@/lib/api-client` (`hc<AppType>`). Never make un-typed ad-hoc `fetch("/api/...")` requests.
 - **Response Type Inference (ADR-005)**: Infer query and mutation response types directly via `InferResponseType<typeof apiClient.api.v1.[domain].$get, 200>` from `hono/client`. Do NOT create redundant hand-written response DTOs.
 - **Client-Side Queries & Mutations**: Wrap API calls in TanStack Query (`useQuery`, `useMutation`) using `getQueryClient()` from `@/lib/query-client`.
+- **URL State & Query Keys**: Use `nuqs` for URL-addressable state such as filters, search, sorting, pagination, page size, tabs, selected resources, and shareable drawer/split-view state. The root `Providers` mounts `NuqsAdapter`; feature code uses typed nuqs parsers rather than `useState` or manual `URLSearchParams` mutation.
+- **TanStack Query Integration**: Normalize the parsed URL values, include the complete filter object in the `queryKey`, and pass the same values to the typed Hono RPC query. Keep server data and loading/error state in TanStack Query; do not mirror it into URL state. Use `clearOnDefault` for canonical URLs and debounce high-frequency search updates.
+- **Server Parsing**: When a route needs server-side filtering or prefetching, define a shared parser contract and consume it with `nuqs/server` `createSearchParamsCache`; the API's shared Zod schema remains authoritative for validation and bounds.
 - **Number & Currency Formatting**: Always apply `tabular-nums` class to prices, metrics, dates, and live numbers (e.g. `<span className="tabular-nums">$15,231.89</span>`) to prevent horizontal layout shift.
 
 ---

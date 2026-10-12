@@ -39,6 +39,12 @@ The platform UI is built on a soft, tactile, claymorphic dark aesthetic inspired
 
 All frontend forms use React Hook Form with `@hookform/resolvers/zod` and a shared Zod schema from `packages/types/src/schemas/*`. Server-backed submissions use the typed Hono RPC client through TanStack Query mutations and invalidate the scoped query after success. The semantic `<form>` element may be used as the submission boundary, but raw form controls and ad-hoc request payloads are not allowed when a shared Base UI primitive exists.
 
+### URL State, Filters, and Server State
+
+Use `nuqs` as the canonical owner of URL-addressable view state: search, filters, date ranges, pagination, page size, sorting, tabs, selected resources, and shareable drawer or split-view state. Each Next.js app mounts one `NuqsAdapter` at its provider boundary. Feature modules define typed parsers and use `clearOnDefault`; high-frequency search updates should be debounced with nuqs URL-update options.
+
+The parsed URL state is an input to TanStack Query, not a replacement for it. Normalize the values, include them in the query key, and pass the same values to the typed Hono RPC call. TanStack Query owns server data, caching, and request status. React Hook Form owns unsaved form drafts. Transient popover, hover, focus, animation, and local loading state may remain in React state. Do not manually mutate `URLSearchParams`, duplicate URL state with `useState`, put secrets or PII in the URL, or store server data in URL parameters. For server components, reuse the feature parser contract with `nuqs/server` `createSearchParamsCache`; shared Zod/API schemas still enforce validation and bounds.
+
 ### Mapping Table: What to Use
 
 | Instead of Raw HTML...                 | ALWAYS Use `@hono-commerce/ui` Primitive                       | Reason & Benefit                                                                                                              |

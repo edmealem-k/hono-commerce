@@ -66,6 +66,10 @@ hono-commerce/
 
 ## 3. Multi-Tenancy & Domain Routing Architecture
 
+### Frontend View State Contract
+
+Next.js applications use `nuqs` for shareable, URL-addressable view state (filters, search, date ranges, pagination, sorting, tabs, selected resources, and shareable drawer/split-view state). Each app mounts one `NuqsAdapter`. Parsed values are normalized and included in TanStack Query keys before being mapped to typed Hono RPC query parameters; TanStack Query remains the owner of server data and request status. Transient interaction state and unsaved React Hook Form drafts remain local. Server components use the same typed parser definitions through `nuqs/server` `createSearchParamsCache`, while API Zod schemas remain authoritative for validation and bounds.
+
 In Next.js 16, edge domain routing and security filtering are executed via **`proxy.ts`** on the Node.js runtime:
 
 ```mermaid
