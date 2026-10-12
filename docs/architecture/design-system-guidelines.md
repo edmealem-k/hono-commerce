@@ -35,6 +35,10 @@ The platform UI is built on a soft, tactile, claymorphic dark aesthetic inspired
 > [!IMPORTANT]
 > **Zero Raw HTML Inputs/Buttons Policy**: Never use raw, unstyled native HTML form controls (`<button>`, `<input>`, `<select>`, `<table>`, `<dialog>`). Always import and use the corresponding `@hono-commerce/ui` primitive.
 
+### Form State and Data Mutation Standard
+
+All frontend forms use React Hook Form with `@hookform/resolvers/zod` and a shared Zod schema from `packages/types/src/schemas/*`. Server-backed submissions use the typed Hono RPC client through TanStack Query mutations and invalidate the scoped query after success. The semantic `<form>` element may be used as the submission boundary, but raw form controls and ad-hoc request payloads are not allowed when a shared Base UI primitive exists.
+
 ### Mapping Table: What to Use
 
 | Instead of Raw HTML...                 | ALWAYS Use `@hono-commerce/ui` Primitive                       | Reason & Benefit                                                                                                              |

@@ -751,6 +751,7 @@ The tenant and platform layouts MUST use the same generic shell renderer and MUS
 15. **`MUST`** implement the six lifecycle states defined by this specification for shell bootstrap, workspace-hub content, tenant-home content, and sign-in interactions.
 16. **`MUST`** use `Skeleton` for layout-stable loading states and shared `Empty`/`EmptyState` components for zero-data states.
 17. **`MUST`** use `FieldGroup`, `Field`, visible labels, and shared validation schemas for sign-in forms.
+    17a. **`MUST`** use shared shadcn/Base UI controls, React Hook Form, and Zod schemas for every form; server-backed submissions **MUST** use typed TanStack Query mutations and invalidation. Raw HTML controls and ad-hoc request payloads are forbidden where shared primitives exist.
 18. **`MUST`** use `StatusPill` or established Badge variants for operational status; bespoke styled status spans are forbidden.
 19. **`MUST`** render `AvatarFallback` whenever an Avatar is used.
 20. **`MUST`** give every icon-only action an accessible name and visible focus treatment.

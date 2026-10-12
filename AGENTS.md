@@ -140,6 +140,15 @@ This document contains mandatory architectural, database, backend API, and event
 - Pure, unstyled or headless base primitives: `button`, `card`, `dialog`, `drawer`, `dropdown-menu`, `field`, `input`, `input-group`, `popover`, `resizable`, `select`, `sheet`, `sidebar`, `table`, `tabs`, `textarea`, `tooltip`, etc.
 - **Invariant**: Primitives must never contain application-specific business logic or layout coupling.
 
+### C. Frontend Form and Server-State Standard
+
+- Every frontend form in `apps/dashboard`, `apps/storefront`, and shared feature flows MUST use the corresponding shadcn/Base UI primitives from `@hono-commerce/ui` for controls and `Field`/`FieldGroup` for layout and validation messaging.
+- Form field state and submission handling MUST use React Hook Form with `@hookform/resolvers/zod` and a Zod schema authored in `packages/types/src/schemas/*`.
+- Any form that changes server state MUST submit through a typed Hono RPC call wrapped in TanStack Query `useMutation`, with scoped invalidation or refetch after success. View-only controls may use local React state.
+- Shared request schemas MUST be reused by backend `zValidator` and frontend `react-hook-form`/`zodResolver`; ad-hoc payload shapes are forbidden.
+- Raw `<input>`, `<select>`, `<textarea>`, `<button>`, and custom control replacements are forbidden when a shared primitive exists. A semantic `<form>` element is allowed as the React Hook Form submission boundary.
+- Form fields MUST expose visible labels, `data-invalid`, `aria-invalid`, disabled state, and `FieldError` feedback according to the app-level frontend instructions.
+
 ### B. Composite Shared UI Systems (`@hono-commerce/ui/shared/*`)
 
 High-level reusable modules used across `storefront` and `dashboard`:

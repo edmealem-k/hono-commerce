@@ -58,6 +58,10 @@ The proxy must strip untrusted tenant headers, derive tenant context only from a
 
 ## 4. Contracts and type definitions (`packages/types`)
 
+### 4.0 Form and server-state standard
+
+Every form in this feature MUST use a shared shadcn/Base UI control, React Hook Form for field state, and a Zod schema authored in `@hono-commerce/types` with `zodResolver`. Forms must render visible labels and field-level validation through the shared `Field`/`FieldGroup` primitives. TanStack Query mutations are required for server-backed submissions and invalidation; local component state is reserved for view-only interaction such as open/closed panels and current wizard step. Raw `<form>`, `<input>`, `<select>`, `<textarea>`, or `<button>` controls and ad-hoc request payloads are not permitted when an equivalent shared primitive or schema exists.
+
 ### 4.1 Permission constants
 
 Create a typed permission registry and role-to-permission map in the shared auth domain (or re-export the canonical registry from `packages/auth`). The initial keys are:

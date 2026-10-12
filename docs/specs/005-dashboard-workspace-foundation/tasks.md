@@ -15,6 +15,8 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 1: Shared contracts and permissions
 
+- [ ] 1.0 Confirm every feature form has a shared shadcn/Base UI control, React Hook Form state, a shared Zod schema, and a TanStack Query mutation when it changes server state.
+
 - [x] 1.1 Define the canonical permission key union and registry for platform and tenant permissions.
 - [x] 1.2 Update the role-to-permission map so platform admin, platform staff, tenant owner, and tenant member resolve through the canonical helper.
 - [x] 1.3 Add `MODERATION:READ`, `QUEUES:READ`, and `PLATFORM:SETTINGS` without exposing routes that do not yet exist.
@@ -88,6 +90,7 @@ This checklist decomposes the approved specification and implementation plan. Ta
 - [ ] 4.13 Reuse existing Base UI Sheet/Dialog primitives and remove inline z-index/layout coupling from the new behavior.
 - [ ] 4.14 Preserve existing `GlobalModal`, `ConfirmDialog`, `GlobalSplitView`, and responsive content-sidebar APIs.
 - [ ] 4.15 Verify shared UI uses Base UI `render`, semantic tokens, and no raw HTML controls where primitives exist.
+- [ ] 4.16 Verify all form surfaces use `Field`/`FieldGroup`, visible labels, `zodResolver`, and typed TanStack Query mutations; reject ad-hoc payload construction.
 
 ## Phase 5: Dashboard API/bootstrap and hub
 
@@ -150,3 +153,4 @@ This checklist decomposes the approved specification and implementation plan. Ta
 - [ ] Do not add aggregate sales/order/catalog/analytics endpoints or fabricated dashboard metrics.
 - [ ] Do not add support chat, platform chat, WebSocket notifications, notification inbox, moderation UI, queue UI, or platform settings UI.
 - [ ] Do not introduce a second permission registry, manual API route dictionary, manual response DTO, raw environment variable, `any`, `unknown`, or type assertion workaround.
+- [ ] Do not use raw HTML form controls or unvalidated ad-hoc form state where shared shadcn/Base UI, React Hook Form, and Zod contracts apply.
