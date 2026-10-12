@@ -94,15 +94,15 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 5: Dashboard API/bootstrap and hub
 
-- [ ] 5.1 Add `apps/dashboard/src/lib/api-server.ts` that forwards request cookies, forwards only verified tenant context, and uses `cache: "no-store"` for session/workspace bootstrap.
-- [ ] 5.2 Add typed TanStack Query hooks for workspaces and notifications using generated endpoint inference.
-- [ ] 5.3 Replace scaffold `apps/dashboard/src/app/page.tsx` with the always-visible workspace manager hub.
-- [ ] 5.4 Render authorized workspace cards with identity, type/role, enter action, and only real overflow actions.
-- [ ] 5.5 Add the `Add Workspace` trigger and connect it to the future-compatible multistep drawer entry point without implementing tenant creation logic.
-- [ ] 5.6 Add the account menu with Personal Workspace, Workspaces, conditional Admin via `PLATFORM:READ`, and Sign Out.
-- [ ] 5.7 Add notification and appearance actions to the hub header; omit search.
-- [ ] 5.8 Implement hub Initial, Loading, Success, Empty, Error, and Expired states.
-- [ ] 5.9 Confirm the hub never auto-redirects when exactly one authorized workspace exists.
+- [x] 5.1 Add `apps/dashboard/src/lib/api-server.ts` that forwards request cookies, forwards only verified tenant context, and uses `cache: "no-store"` for session/workspace bootstrap.
+- [x] 5.2 Add typed TanStack Query hooks for workspaces and notifications using generated endpoint inference.
+- [x] 5.3 Replace scaffold `apps/dashboard/src/app/page.tsx` with the always-visible workspace manager hub.
+- [x] 5.4 Render authorized workspace cards with identity, type/role, enter action, and only real overflow actions.
+- [x] 5.5 Add the `Add Workspace` trigger and connect it to the future-compatible multistep drawer entry point without implementing tenant creation logic.
+- [x] 5.6 Add the account menu with Personal Workspace, Workspaces, conditional Admin via `PLATFORM:READ`, and Sign Out.
+- [x] 5.7 Add notification and appearance actions to the hub header; omit search.
+- [x] 5.8 Implement hub Initial, Loading, Success, Empty, Error, and Expired states.
+- [x] 5.9 Confirm the hub never auto-redirects when exactly one authorized workspace exists.
 
 ## Phase 6: Tenant and platform shells
 
