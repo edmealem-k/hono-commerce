@@ -1,6 +1,7 @@
-import { TenantWorkspaceShell } from "@/components/tenant-workspace-shell";
 import { createServerApi } from "@/lib/api-server";
 import { notFound, redirect } from "next/navigation";
+
+import { TenantWorkspaceShell } from "./_components/tenant-workspace-shell";
 
 export default async function TenantDashboardLayout({
   children,

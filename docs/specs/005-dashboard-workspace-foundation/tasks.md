@@ -94,6 +94,8 @@ This checklist decomposes the approved specification and implementation plan. Ta
 
 ## Phase 5: Dashboard API/bootstrap and hub
 
+- [x] 5.0 Apply the colocated ownership rule: keep the workspace hub under `app/_components`, public auth-only composites under `app/(public)/_components`, and tenant/admin shell composites beside their owning layouts; retain only cross-route infrastructure in `src/components` and `src/lib`.
+
 - [x] 5.1 Add `apps/dashboard/src/lib/api-server.ts` that forwards request cookies, forwards only verified tenant context, and uses `cache: "no-store"` for session/workspace bootstrap.
 - [x] 5.2 Add typed TanStack Query hooks for workspaces and notifications using generated endpoint inference.
 - [x] 5.3 Replace scaffold `apps/dashboard/src/app/page.tsx` with the always-visible workspace manager hub.

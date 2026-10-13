@@ -11,7 +11,7 @@ import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AccountUnavailable } from "../sign-in/sign-in-form";
+import { AccountUnavailable } from "../_components/sign-in-form";
 
 function getSafeNextPath(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {

@@ -1,7 +1,7 @@
 import { createServerApi } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 
-import { AccountUnavailable, SignInForm } from "./sign-in-form";
+import { AccountUnavailable, SignInForm } from "../_components/sign-in-form";
 
 function getSafeCallbackPath(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {

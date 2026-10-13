@@ -133,6 +133,12 @@ This document contains mandatory architectural, database, backend API, and event
 
 ## 5. Shared UI Component Architecture (`packages/ui`)
 
+### Route-local frontend ownership
+
+- Next.js route-specific composition MUST live in the nearest private App Router folder (`_components/`, `_hooks/`, or `_lib/`) owned by the page or route group. Components used by sibling routes in one group belong in that group’s private folder.
+- App-wide providers, API clients, query infrastructure, theme infrastructure, and components used by multiple route groups may remain under an app’s `src/components` or `src/lib`.
+- Route-local modules MAY compose `packages/ui` primitives and shared composites. Shared packages MUST NOT import route-local modules. Promote a route-local component to `packages/ui/src/shared/*` only when a real cross-app or cross-feature consumer exists.
+
 `packages/ui` enforces a strict separation between **Atomic Primitives** and **Composite Shared UI Systems**:
 
 ### A. Atomic Primitives (`@hono-commerce/ui/components/*`)

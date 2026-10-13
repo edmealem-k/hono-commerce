@@ -32,7 +32,8 @@ The first iteration is structural. It must not invent aggregate sales, order, ca
 
 - Atomic controls stay in `packages/ui/src/components/*`.
 - Reusable product systems go in `packages/ui/src/shared/*`.
-- Dashboard route groups own only composition, route data, permissions, and API loading. They must not duplicate the shell markup.
+- Dashboard route groups own composition, route data, permissions, and API loading. Route-specific composites live in the nearest private App Router folder (`_components`, `_hooks`, or `_lib`); app-wide providers and infrastructure remain under `src/components` or `src/lib`.
+- A component used by sibling routes in one route group belongs in that group’s private folder (for example, `app/(public)/_components`); a component used by one page or layout belongs beside that page or layout. Route-local modules may compose shared UI, but shared UI must never import route-local modules.
 - The workspace hub is a first-class root page and is always shown. A single authorized tenant never auto-redirects.
 - The hub header exposes only the approved actions: notification bell, account menu, and appearance. Search, command palette, chat, and AI controls are intentionally absent.
 

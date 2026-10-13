@@ -16,6 +16,9 @@ This document contains mandatory rules for frontend development, component compo
 ## 1. UI & Component Architecture (Base UI + Shadcn)
 
 - **Component Source**: Always import atomic primitives from `@hono-commerce/ui/components/...` and composite systems from `@hono-commerce/ui/shared/...`. Do not write local one-off duplicates in `apps/dashboard/src/components/ui`. If a needed component is missing, add it to `packages/ui` first.
+- **Colocated feature ownership**: Keep route-specific composition close to the route that owns it. Use private `_components/`, `_hooks/`, and `_lib/` folders inside the nearest App Router segment for code consumed only by that page or route group. Keep app-wide providers, theme infrastructure, API clients, query infrastructure, and components shared by multiple route groups under `src/components` or `src/lib`.
+- **Nearest shared boundary**: If a component is used by sibling routes in one route group, place it in that group’s private folder (for example, `app/(public)/_components`). If it is used by one page/layout only, place it under that page’s private folder (for example, `app/(tenant)/[slug]/_components`). Promote code to `packages/ui/src/shared/*` only after a real cross-app or cross-feature consumer exists.
+- **Import ownership**: Prefer relative imports for colocated private modules and `@/components`/`@/lib` only for app-wide modules. Route-local modules may compose shared UI, but shared UI must never import route-local code.
 - **Base UI Primitives (Not Radix `asChild`)**: This workspace uses `@base-ui/react`. When a component supports composition (e.g. `<DropdownMenuTrigger render={<Button ... />} />`), use the `render` prop. Do not assume Radix `asChild`.
 - **Zero Raw HTML Inputs/Buttons Policy**:
   - `<Button>` instead of `<button>`

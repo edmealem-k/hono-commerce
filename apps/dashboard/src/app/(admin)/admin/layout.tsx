@@ -1,4 +1,3 @@
-import { AdminWorkspaceShell } from "@/components/admin-workspace-shell";
 import { createServerApi } from "@/lib/api-server";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
@@ -10,6 +9,8 @@ import {
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+import { AdminWorkspaceShell } from "./_components/admin-workspace-shell";
 
 export default async function AdminDashboardLayout({
   children,

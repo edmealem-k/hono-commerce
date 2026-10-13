@@ -1,7 +1,7 @@
 import { createServerApi } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 
-import { WorkspaceHub } from "./workspace-hub";
+import { WorkspaceHub } from "./_components/workspace-hub";
 
 import type { WorkspacesResponse } from "@/lib/queries/workspaces";
 
