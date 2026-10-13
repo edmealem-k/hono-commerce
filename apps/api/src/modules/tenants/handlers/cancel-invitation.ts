@@ -16,16 +16,13 @@ export const cancelInvitationHandler = factory.createHandlers(
     const { invitationId } = c.req.valid("param");
     const tenantContext = c.get("tenant");
 
-    const [existing] = await db
-      .select()
-      .from(tenantInvitation)
-      .where(
+    const existing = await db.query.tenantInvitation.findFirst({
+      where: (table, { and, eq }) =>
         and(
-          eq(tenantInvitation.id, invitationId),
-          eq(tenantInvitation.tenantId, tenantContext.tenantId),
+          eq(table.id, invitationId),
+          eq(table.tenantId, tenantContext.tenantId),
         ),
-      )
-      .limit(1);
+    });
 
     if (!existing) {
       return c.json(

@@ -1,6 +1,5 @@
 import { hasPermission } from "@hono-commerce/auth/permissions";
-import { db, desc, eq } from "@hono-commerce/db";
-import { tenant, tenantMember } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
 import { createFactory } from "hono/factory";
 
 import { ok } from "../../../lib/response";
@@ -12,21 +11,29 @@ const factory = createFactory<AuthEnv>();
 export const listWorkspacesHandler = factory.createHandlers(async (c) => {
   const user = c.get("user");
 
-  const workspaces = await db
-    .select({
-      id: tenant.id,
-      name: tenant.name,
-      slug: tenant.slug,
-      logo: tenant.logo,
-      status: tenant.status,
-      role: tenantMember.role,
-      memberStatus: tenantMember.status,
-      createdAt: tenant.createdAt,
-    })
-    .from(tenantMember)
-    .innerJoin(tenant, eq(tenantMember.tenantId, tenant.id))
-    .where(eq(tenantMember.userId, user.id))
-    .orderBy(desc(tenantMember.createdAt));
+  const memberships = await db.query.tenantMember.findMany({
+    columns: { role: true, status: true },
+    where: (membership, { eq }) => eq(membership.userId, user.id),
+    orderBy: (membership, { desc }) => desc(membership.createdAt),
+    with: {
+      tenant: {
+        columns: {
+          id: true,
+          name: true,
+          slug: true,
+          logo: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  const workspaces = memberships.map(({ tenant, role, status }) => ({
+    ...tenant,
+    role,
+    memberStatus: status,
+  }));
 
   return c.json(
     ok({

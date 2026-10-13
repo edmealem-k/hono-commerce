@@ -19,20 +19,11 @@ export const deleteFileHandler = factory.createHandlers(
     const { permanent } = c.req.valid("query");
     const tenantContext = c.get("tenant");
 
-    const [file] = await db
-      .select({
-        id: fileAsset.id,
-        s3Key: fileAsset.s3Key,
-        status: fileAsset.status,
-      })
-      .from(fileAsset)
-      .where(
-        and(
-          eq(fileAsset.id, fileId),
-          eq(fileAsset.tenantId, tenantContext.tenantId),
-        ),
-      )
-      .limit(1);
+    const file = await db.query.fileAsset.findFirst({
+      columns: { id: true, s3Key: true, status: true },
+      where: (table, { and, eq }) =>
+        and(eq(table.id, fileId), eq(table.tenantId, tenantContext.tenantId)),
+    });
 
     if (!file) {
       return c.json(
@@ -45,18 +36,16 @@ export const deleteFileHandler = factory.createHandlers(
       return c.json(ok({ message: "File deletion is already queued" }), 202);
     }
 
-    const links = await db
-      .select({ id: fileAssetLink.id })
-      .from(fileAssetLink)
-      .where(
+    const links = await db.query.fileAssetLink.findFirst({
+      columns: { id: true },
+      where: (table, { and, eq }) =>
         and(
-          eq(fileAssetLink.fileId, fileId),
-          eq(fileAssetLink.tenantId, tenantContext.tenantId),
+          eq(table.fileId, fileId),
+          eq(table.tenantId, tenantContext.tenantId),
         ),
-      )
-      .limit(1);
+    });
 
-    if (links.length > 0 && !permanent) {
+    if (links && !permanent) {
       return c.json(
         fail({
           error: "File is still attached to a resource",

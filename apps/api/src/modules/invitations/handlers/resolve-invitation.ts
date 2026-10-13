@@ -1,7 +1,5 @@
 import { verifyJwt } from "@hono-commerce/auth";
-import { db, eq } from "@hono-commerce/db";
-import { user } from "@hono-commerce/db/schema/auth";
-import { tenant, tenantInvitation } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
 import {
   invitationParamSchema,
   resolveInvitationQuerySchema,
@@ -41,11 +39,23 @@ export const resolveInvitationHandler = factory.createHandlers(
       );
     }
 
-    const [invitationRecord] = await db
-      .select()
-      .from(tenantInvitation)
-      .where(eq(tenantInvitation.id, invitationId))
-      .limit(1);
+    const invitationRecord = await db.query.tenantInvitation.findFirst({
+      where: (table, { eq }) => eq(table.id, invitationId),
+      with: {
+        tenant: {
+          columns: {
+            id: true,
+            name: true,
+            slug: true,
+            logo: true,
+            status: true,
+          },
+        },
+        inviter: {
+          columns: { id: true, name: true, email: true, image: true },
+        },
+      },
+    });
 
     if (!invitationRecord) {
       return c.json(
@@ -85,31 +95,6 @@ export const resolveInvitationHandler = factory.createHandlers(
       );
     }
 
-    const [tenantRecord] = await db
-      .select({
-        id: tenant.id,
-        name: tenant.name,
-        slug: tenant.slug,
-        logo: tenant.logo,
-        status: tenant.status,
-      })
-      .from(tenant)
-      .where(eq(tenant.id, invitationRecord.tenantId))
-      .limit(1);
-
-    const [inviterRecord] = invitationRecord.inviterId
-      ? await db
-          .select({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            image: user.image,
-          })
-          .from(user)
-          .where(eq(user.id, invitationRecord.inviterId))
-          .limit(1)
-      : [undefined];
-
     return c.json(
       ok({
         data: {
@@ -118,14 +103,14 @@ export const resolveInvitationHandler = factory.createHandlers(
           role: invitationRecord.role,
           status: invitationRecord.status,
           createdAt: invitationRecord.createdAt,
-          tenant: tenantRecord ?? {
+          tenant: invitationRecord.tenant ?? {
             id: invitationRecord.tenantId,
             name: "Store",
             slug: "store",
             logo: null,
             status: "active",
           },
-          inviter: inviterRecord ?? {
+          inviter: invitationRecord.inviter ?? {
             id: invitationRecord.inviterId,
             name: "Team Member",
             email: "",

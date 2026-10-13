@@ -24,11 +24,9 @@ export async function seedSuperadmin(
   const name = options.name?.trim() || "Super Admin";
 
   // 1. Check if user already exists
-  const [existingUser] = await db
-    .select()
-    .from(user)
-    .where(eq(user.email, normalizedEmail))
-    .limit(1);
+  const existingUser = await db.query.user.findFirst({
+    where: (table, { eq }) => eq(table.email, normalizedEmail),
+  });
 
   if (existingUser) {
     const needsElevation =

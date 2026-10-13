@@ -16,27 +16,47 @@ export const confirmUploadHandler = factory.createHandlers(
   async (c) => {
     const { uploadId } = c.req.valid("param");
     const tenantContext = c.get("tenant");
-    const [record] = await db
-      .select({
-        attemptId: fileUploadAttempt.id,
-        attemptStatus: fileUploadAttempt.status,
-        attemptExpiresAt: fileUploadAttempt.expiresAt,
-        fileId: fileAsset.id,
-        s3Key: fileAsset.s3Key,
-        expectedSize: fileAsset.expectedSize,
-        expectedContentType: fileAsset.contentType,
-        fileStatus: fileAsset.status,
-      })
-      .from(fileUploadAttempt)
-      .innerJoin(fileAsset, eq(fileUploadAttempt.fileId, fileAsset.id))
-      .where(
-        and(
-          eq(fileUploadAttempt.id, uploadId),
-          eq(fileUploadAttempt.tenantId, tenantContext.tenantId),
-          eq(fileAsset.tenantId, tenantContext.tenantId),
-        ),
-      )
-      .limit(1);
+    const attempt = await db.query.fileUploadAttempt.findFirst({
+      columns: {
+        id: true,
+        fileId: true,
+        status: true,
+        expiresAt: true,
+      },
+      where: (table, { and, eq }) =>
+        and(eq(table.id, uploadId), eq(table.tenantId, tenantContext.tenantId)),
+    });
+
+    const file = attempt
+      ? await db.query.fileAsset.findFirst({
+          columns: {
+            id: true,
+            s3Key: true,
+            expectedSize: true,
+            contentType: true,
+            status: true,
+          },
+          where: (table, { and, eq }) =>
+            and(
+              eq(table.id, attempt.fileId),
+              eq(table.tenantId, tenantContext.tenantId),
+            ),
+        })
+      : undefined;
+
+    const record =
+      attempt && file
+        ? {
+            attemptId: attempt.id,
+            attemptStatus: attempt.status,
+            attemptExpiresAt: attempt.expiresAt,
+            fileId: file.id,
+            s3Key: file.s3Key,
+            expectedSize: file.expectedSize,
+            expectedContentType: file.contentType,
+            fileStatus: file.status,
+          }
+        : undefined;
 
     if (!record) {
       return c.json(

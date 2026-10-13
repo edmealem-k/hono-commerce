@@ -1,10 +1,5 @@
-import { and, db, eq, inArray } from "@hono-commerce/db";
-import { user } from "@hono-commerce/db/schema/auth";
-import {
-  notification,
-  notificationPreference,
-} from "@hono-commerce/db/schema/notification";
-import { tenantMember } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
+import { notification } from "@hono-commerce/db/schema/notification";
 import {
   createRedisConnection,
   enqueueEmail,
@@ -26,22 +21,50 @@ export function createNotificationWorker(): Worker<NotificationJobData> {
         const targetRoles = data.targetRoles ?? ["owner", "member"];
 
         // 1. Resolve active tenant members matching target roles
-        const activeMembers = await db
-          .select({
-            userId: user.id,
-            email: user.email,
-            role: tenantMember.role,
-          })
-          .from(tenantMember)
-          .innerJoin(user, eq(tenantMember.userId, user.id))
-          .where(
+        const matchingMemberships = await db.query.tenantMember.findMany({
+          columns: { userId: true, role: true },
+          where: (membership, { and, eq, inArray }) =>
             and(
-              eq(tenantMember.tenantId, data.tenantId),
-              eq(tenantMember.status, "active"),
-              eq(user.status, "active"),
-              inArray(tenantMember.role, targetRoles),
+              eq(membership.tenantId, data.tenantId),
+              eq(membership.status, "active"),
+              inArray(membership.role, targetRoles),
             ),
-          );
+        });
+
+        const membershipByUserId = new Map(
+          matchingMemberships.map((membership) => [
+            membership.userId,
+            membership,
+          ]),
+        );
+        const activeUsers =
+          matchingMemberships.length === 0
+            ? []
+            : await db.query.user.findMany({
+                columns: { id: true, email: true },
+                where: (memberUser, { and, eq, inArray }) =>
+                  and(
+                    eq(memberUser.status, "active"),
+                    inArray(
+                      memberUser.id,
+                      matchingMemberships.map(
+                        (membership) => membership.userId,
+                      ),
+                    ),
+                  ),
+              });
+        const activeMembers = activeUsers.flatMap((memberUser) => {
+          const membership = membershipByUserId.get(memberUser.id);
+          return membership
+            ? [
+                {
+                  userId: memberUser.id,
+                  email: memberUser.email,
+                  role: membership.role,
+                },
+              ]
+            : [];
+        });
 
         if (activeMembers.length === 0) {
           console.log(
@@ -52,10 +75,10 @@ export function createNotificationWorker(): Worker<NotificationJobData> {
 
         // 2. Fetch user preferences in bulk
         const userIds = activeMembers.map((m) => m.userId);
-        const preferences = await db
-          .select()
-          .from(notificationPreference)
-          .where(inArray(notificationPreference.userId, userIds));
+        const preferences = await db.query.notificationPreference.findMany({
+          where: (preference, { inArray }) =>
+            inArray(preference.userId, userIds),
+        });
 
         const prefsMap = new Map(preferences.map((p) => [p.userId, p]));
 
@@ -136,26 +159,23 @@ export function createNotificationWorker(): Worker<NotificationJobData> {
         const systemRoles = data.systemRoles ?? ["admin", "staff"];
 
         // 1. Resolve active platform staff & admins
-        const platformUsers = await db
-          .select({
-            userId: user.id,
-            email: user.email,
-            role: user.role,
+        const platformUsers = (
+          await db.query.user.findMany({
+            columns: { id: true, email: true, role: true },
+            where: (table, { and, eq, inArray }) =>
+              and(eq(table.status, "active"), inArray(table.role, systemRoles)),
           })
-          .from(user)
-          .where(
-            and(eq(user.status, "active"), inArray(user.role, systemRoles)),
-          );
+        ).map(({ id, email, role }) => ({ userId: id, email, role }));
 
         if (platformUsers.length === 0) {
           return { dispatched: 0 };
         }
 
         const userIds = platformUsers.map((u) => u.userId);
-        const preferences = await db
-          .select()
-          .from(notificationPreference)
-          .where(inArray(notificationPreference.userId, userIds));
+        const preferences = await db.query.notificationPreference.findMany({
+          where: (preference, { inArray }) =>
+            inArray(preference.userId, userIds),
+        });
 
         const prefsMap = new Map(preferences.map((p) => [p.userId, p]));
         let inAppCount = 0;

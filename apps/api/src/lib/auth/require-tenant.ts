@@ -1,6 +1,5 @@
 import { hasPermission } from "@hono-commerce/auth/permissions";
-import { and, db, eq } from "@hono-commerce/db";
-import { tenant, tenantMember } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
 
 import { fail } from "../response";
 
@@ -48,11 +47,11 @@ export function requireTenantContext(paramKey = "tenantId") {
         identifier,
       );
 
-    const [tenantRecord] = await db
-      .select()
-      .from(tenant)
-      .where(isUuid ? eq(tenant.id, identifier) : eq(tenant.slug, identifier))
-      .limit(1);
+    const tenantRecord = await db.query.tenant.findFirst({
+      where: isUuid
+        ? (table, { eq }) => eq(table.id, identifier)
+        : (table, { eq }) => eq(table.slug, identifier),
+    });
 
     const isPlatformAdmin = hasPermission(user, "PLATFORM:SETTINGS");
 
@@ -92,16 +91,10 @@ export function requireTenantContext(paramKey = "tenantId") {
     }
 
     // Verify user membership in tenant
-    const [membership] = await db
-      .select()
-      .from(tenantMember)
-      .where(
-        and(
-          eq(tenantMember.tenantId, tenantRecord.id),
-          eq(tenantMember.userId, user.id),
-        ),
-      )
-      .limit(1);
+    const membership = await db.query.tenantMember.findFirst({
+      where: (table, { and, eq }) =>
+        and(eq(table.tenantId, tenantRecord.id), eq(table.userId, user.id)),
+    });
 
     if (!membership) {
       return c.json(

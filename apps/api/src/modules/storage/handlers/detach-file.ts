@@ -44,18 +44,16 @@ export const detachFileHandler = factory.createHandlers(
       );
     }
 
-    const remainingLinks = await db
-      .select({ id: fileAssetLink.id })
-      .from(fileAssetLink)
-      .where(
+    const remainingLink = await db.query.fileAssetLink.findFirst({
+      columns: { id: true },
+      where: (table, { and, eq }) =>
         and(
-          eq(fileAssetLink.fileId, fileId),
-          eq(fileAssetLink.tenantId, tenantContext.tenantId),
+          eq(table.fileId, fileId),
+          eq(table.tenantId, tenantContext.tenantId),
         ),
-      )
-      .limit(1);
+    });
 
-    if (remainingLinks.length === 0) {
+    if (!remainingLink) {
       await db
         .update(fileAsset)
         .set({ status: "uploaded_unlinked" })
