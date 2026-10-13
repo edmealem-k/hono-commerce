@@ -1,4 +1,4 @@
-import { and, db, eq, inArray, lte } from "@hono-commerce/db";
+import { and, db, eq, inArray } from "@hono-commerce/db";
 import { fileAsset } from "@hono-commerce/db/schema/files";
 import {
   createRedisConnection,
@@ -33,19 +33,14 @@ export function createStorageCleanupWorker(): Worker<StorageCleanupJobData> {
 }
 
 export async function runStorageExpirySweep(): Promise<number> {
-  const expired = await db
-    .select({
-      fileId: fileAsset.id,
-      tenantId: fileAsset.tenantId,
-      s3Key: fileAsset.s3Key,
-    })
-    .from(fileAsset)
-    .where(
+  const expired = await db.query.fileAsset.findMany({
+    columns: { id: true, tenantId: true, s3Key: true },
+    where: (table, { and, inArray, lte }) =>
       and(
-        inArray(fileAsset.status, ["pending_upload", "signed"]),
-        lte(fileAsset.uploadExpiresAt, new Date()),
+        inArray(table.status, ["pending_upload", "signed"]),
+        lte(table.uploadExpiresAt, new Date()),
       ),
-    );
+  });
 
   for (const file of expired) {
     await db
@@ -53,16 +48,16 @@ export async function runStorageExpirySweep(): Promise<number> {
       .set({ status: "delete_pending", lastStorageError: "UPLOAD_EXPIRED" })
       .where(
         and(
-          eq(fileAsset.id, file.fileId),
+          eq(fileAsset.id, file.id),
           inArray(fileAsset.status, ["pending_upload", "signed"]),
         ),
       );
     await enqueueStorageCleanup({
       jobType: "storage-cleanup",
       tenantId: file.tenantId,
-      fileId: file.fileId,
+      fileId: file.id,
       s3Key: file.s3Key,
-      idempotencyKey: `storage-expiry:${file.tenantId}:${file.fileId}`,
+      idempotencyKey: `storage-expiry:${file.tenantId}:${file.id}`,
     });
   }
 

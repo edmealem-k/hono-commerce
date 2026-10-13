@@ -1,4 +1,4 @@
-import { and, count, db, desc, eq } from "@hono-commerce/db";
+import { and, count, db, eq } from "@hono-commerce/db";
 import { notification } from "@hono-commerce/db/schema/notification";
 import { notificationListQuerySchema } from "@hono-commerce/types";
 import { createFactory } from "hono/factory";
@@ -25,22 +25,22 @@ export const listNotificationsHandler = factory.createHandlers(
     const { limit } = c.req.valid("query");
 
     const [items, unreadResult] = await Promise.all([
-      db
-        .select({
-          id: notification.id,
-          tenantId: notification.tenantId,
-          type: notification.type,
-          title: notification.title,
-          message: notification.message,
-          actionUrl: notification.actionUrl,
-          isRead: notification.isRead,
-          readAt: notification.readAt,
-          createdAt: notification.createdAt,
-        })
-        .from(notification)
-        .where(eq(notification.userId, user.id))
-        .orderBy(desc(notification.createdAt))
-        .limit(limit),
+      db.query.notification.findMany({
+        columns: {
+          id: true,
+          tenantId: true,
+          type: true,
+          title: true,
+          message: true,
+          actionUrl: true,
+          isRead: true,
+          readAt: true,
+          createdAt: true,
+        },
+        where: (table, { eq }) => eq(table.userId, user.id),
+        orderBy: (table, { desc }) => desc(table.createdAt),
+        limit,
+      }),
       db
         .select({ count: count(notification.id) })
         .from(notification)

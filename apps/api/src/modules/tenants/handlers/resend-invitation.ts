@@ -1,6 +1,5 @@
 import { signJwt } from "@hono-commerce/auth";
-import { and, db, eq } from "@hono-commerce/db";
-import { tenantInvitation } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
 import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
 import { cancelInvitationParamSchema } from "@hono-commerce/types";
@@ -20,16 +19,13 @@ export const resendInvitationHandler = factory.createHandlers(
     const caller = c.get("user");
     const tenantContext = c.get("tenant");
 
-    const [existing] = await db
-      .select()
-      .from(tenantInvitation)
-      .where(
+    const existing = await db.query.tenantInvitation.findFirst({
+      where: (table, { and, eq }) =>
         and(
-          eq(tenantInvitation.id, invitationId),
-          eq(tenantInvitation.tenantId, tenantContext.tenantId),
+          eq(table.id, invitationId),
+          eq(table.tenantId, tenantContext.tenantId),
         ),
-      )
-      .limit(1);
+    });
 
     if (!existing) {
       return c.json(

@@ -1,6 +1,5 @@
 import { hasPermission } from "@hono-commerce/auth/permissions";
-import { and, db, eq } from "@hono-commerce/db";
-import { fileAsset, fileAssetLink } from "@hono-commerce/db/schema/files";
+import { db } from "@hono-commerce/db";
 import { previewUrlQuerySchema } from "@hono-commerce/types";
 import { createFactory } from "hono/factory";
 
@@ -19,25 +18,20 @@ export const getPreviewUrlHandler = factory.createHandlers(
       c.req.valid("query");
     const user = c.get("user");
     const tenantContext = c.get("tenant");
-    const [file] = await db
-      .select({
-        id: fileAsset.id,
-        s3Key: fileAsset.s3Key,
-        originalName: fileAsset.originalName,
-        contentType: fileAsset.contentType,
-        actualSize: fileAsset.actualSize,
-        category: fileAsset.category,
-        visibility: fileAsset.visibility,
-        status: fileAsset.status,
-      })
-      .from(fileAsset)
-      .where(
-        and(
-          eq(fileAsset.id, fileId),
-          eq(fileAsset.tenantId, tenantContext.tenantId),
-        ),
-      )
-      .limit(1);
+    const file = await db.query.fileAsset.findFirst({
+      columns: {
+        id: true,
+        s3Key: true,
+        originalName: true,
+        contentType: true,
+        actualSize: true,
+        category: true,
+        visibility: true,
+        status: true,
+      },
+      where: (table, { and, eq }) =>
+        and(eq(table.id, fileId), eq(table.tenantId, tenantContext.tenantId)),
+    });
 
     if (!file) {
       return c.json(
@@ -67,18 +61,16 @@ export const getPreviewUrlHandler = factory.createHandlers(
         );
       }
 
-      const [link] = await db
-        .select({ id: fileAssetLink.id })
-        .from(fileAssetLink)
-        .where(
+      const link = await db.query.fileAssetLink.findFirst({
+        columns: { id: true },
+        where: (table, { and, eq }) =>
           and(
-            eq(fileAssetLink.fileId, file.id),
-            eq(fileAssetLink.tenantId, tenantContext.tenantId),
-            eq(fileAssetLink.resourceType, resourceType),
-            eq(fileAssetLink.resourceId, resourceId),
+            eq(table.fileId, file.id),
+            eq(table.tenantId, tenantContext.tenantId),
+            eq(table.resourceType, resourceType),
+            eq(table.resourceId, resourceId),
           ),
-        )
-        .limit(1);
+      });
 
       if (!link) {
         return c.json(

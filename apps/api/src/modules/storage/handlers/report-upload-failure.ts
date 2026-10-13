@@ -16,19 +16,11 @@ export const reportUploadFailureHandler = factory.createHandlers(
     const { uploadId, reason } = c.req.valid("json");
     const tenantContext = c.get("tenant");
 
-    const [attempt] = await db
-      .select({
-        fileId: fileUploadAttempt.fileId,
-        status: fileUploadAttempt.status,
-      })
-      .from(fileUploadAttempt)
-      .where(
-        and(
-          eq(fileUploadAttempt.id, uploadId),
-          eq(fileUploadAttempt.tenantId, tenantContext.tenantId),
-        ),
-      )
-      .limit(1);
+    const attempt = await db.query.fileUploadAttempt.findFirst({
+      columns: { fileId: true, status: true },
+      where: (table, { and, eq }) =>
+        and(eq(table.id, uploadId), eq(table.tenantId, tenantContext.tenantId)),
+    });
 
     if (!attempt) {
       return c.json(

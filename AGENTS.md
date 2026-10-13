@@ -37,6 +37,15 @@ This document contains mandatory architectural, database, backend API, and event
   - All persistent domain tables must include `createdAt` (`defaultNow()`) and `updatedAt` (`$onUpdate(() => new Date())`).
 - **Money & Quantities**:
   - Store all monetary amounts as **integers in cents** (e.g. `priceInCents: integer("price_in_cents")`) to avoid floating-point errors.
+- **Drizzle Query API Convention**:
+  - **Database row reads SHOULD generally use Drizzle's Relational Queries API (`db.query.<table>.findFirst()` / `findMany()`).** This is the strongly preferred, Prisma-like query style in this codebase.
+  - **Avoid Core `select()` for row reads when RQB can express the query clearly and efficiently.** Core aggregate expressions such as `count`, `sum`, `min`, `max`, and similar aggregates MAY be used when RQB would require fetching all matching rows just to calculate the result. Keep aggregate filters scoped; do not select underlying rows.
+  - Compose results in application code when the rows are already needed or the result set is bounded. Do not materialize an unbounded result set solely to compute an aggregate.
+  - Use Core for mutations (`insert`, `update`, `delete`). Prefer RQB for row reads, with Core aggregates as described above.
+  - Apply this convention to new and modified code. Do not undertake a broad rewrite of existing Core queries solely for consistency.
+  - RQB reads must preserve tenant isolation, explicit column selection where appropriate, and existing query semantics. Relational query relations do not replace tenant filters or database foreign-key constraints.
+  - When using `limit` with `orderBy`, include a unique tie-breaker if the sort column is not unique.
+  - Follow the RQB API supported by the repository's installed `drizzle-orm` version; do not copy examples from a different major/version without checking compatibility.
 - **Strict Human-Only Migration Management Invariant**:
   - AI agents MUST NEVER generate, edit, delete, push, or run database migrations (`bun run db:generate`, `bun run db:migrate`, `bun run db:push`, `drizzle-kit generate`, etc.).
   - AI agents are strictly limited to authoring and editing Drizzle TypeScript schema definitions (`packages/db/src/schema/*.ts`).

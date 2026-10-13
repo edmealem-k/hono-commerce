@@ -106,11 +106,9 @@ export const updateInvitationStatusHandler = factory.createHandlers(
     try {
       const result = await db.transaction(async (tx) => {
         // Query invitation inside transaction
-        const [invitationRecord] = await tx
-          .select()
-          .from(tenantInvitation)
-          .where(eq(tenantInvitation.id, invitationId))
-          .limit(1);
+        const invitationRecord = await tx.query.tenantInvitation.findFirst({
+          where: (table, { eq }) => eq(table.id, invitationId),
+        });
 
         if (!invitationRecord) {
           throw new InvitationApiError(
@@ -168,16 +166,13 @@ export const updateInvitationStatusHandler = factory.createHandlers(
 
         // If accepted, provision tenant membership in same transaction
         if (status === "accepted" && authenticatedUserId) {
-          const [existingMember] = await tx
-            .select()
-            .from(tenantMember)
-            .where(
+          const existingMember = await tx.query.tenantMember.findFirst({
+            where: (table, { and, eq }) =>
               and(
-                eq(tenantMember.tenantId, updatedInvitation.tenantId),
-                eq(tenantMember.userId, authenticatedUserId),
+                eq(table.tenantId, updatedInvitation.tenantId),
+                eq(table.userId, authenticatedUserId),
               ),
-            )
-            .limit(1);
+          });
 
           if (existingMember) {
             await tx

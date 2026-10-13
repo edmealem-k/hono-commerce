@@ -26,16 +26,11 @@ export const attachFileHandler = factory.createHandlers(
       );
     }
 
-    const [file] = await db
-      .select({ id: fileAsset.id, status: fileAsset.status })
-      .from(fileAsset)
-      .where(
-        and(
-          eq(fileAsset.id, fileId),
-          eq(fileAsset.tenantId, tenantContext.tenantId),
-        ),
-      )
-      .limit(1);
+    const file = await db.query.fileAsset.findFirst({
+      columns: { id: true, status: true },
+      where: (table, { and, eq }) =>
+        and(eq(table.id, fileId), eq(table.tenantId, tenantContext.tenantId)),
+    });
 
     if (!file) {
       return c.json(

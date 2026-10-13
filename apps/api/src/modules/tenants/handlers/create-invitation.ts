@@ -1,10 +1,6 @@
 import { signJwt } from "@hono-commerce/auth";
-import { and, db, eq } from "@hono-commerce/db";
-import { user } from "@hono-commerce/db/schema/auth";
-import {
-  tenantInvitation,
-  tenantMember,
-} from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
+import { tenantInvitation } from "@hono-commerce/db/schema/tenant";
 import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
 import {
@@ -41,23 +37,20 @@ export const createInvitationHandler = factory.createHandlers(
     }
 
     // 1. Check if user is already an active member of this store
-    const [existingUser] = await db
-      .select({ id: user.id })
-      .from(user)
-      .where(eq(user.email, normalizedEmail))
-      .limit(1);
+    const existingUser = await db.query.user.findFirst({
+      columns: { id: true },
+      where: (table, { eq }) => eq(table.email, normalizedEmail),
+    });
 
     if (existingUser) {
-      const [existingMember] = await db
-        .select({ id: tenantMember.id, status: tenantMember.status })
-        .from(tenantMember)
-        .where(
+      const existingMember = await db.query.tenantMember.findFirst({
+        columns: { id: true, status: true },
+        where: (table, { and, eq }) =>
           and(
-            eq(tenantMember.tenantId, tenantContext.tenantId),
-            eq(tenantMember.userId, existingUser.id),
+            eq(table.tenantId, tenantContext.tenantId),
+            eq(table.userId, existingUser.id),
           ),
-        )
-        .limit(1);
+      });
 
       if (existingMember && existingMember.status === "active") {
         return c.json(
@@ -71,17 +64,15 @@ export const createInvitationHandler = factory.createHandlers(
     }
 
     // 2. Check if a pending invitation already exists for this email
-    const [existingPending] = await db
-      .select({ id: tenantInvitation.id })
-      .from(tenantInvitation)
-      .where(
+    const existingPending = await db.query.tenantInvitation.findFirst({
+      columns: { id: true },
+      where: (table, { and, eq }) =>
         and(
-          eq(tenantInvitation.tenantId, tenantContext.tenantId),
-          eq(tenantInvitation.email, normalizedEmail),
-          eq(tenantInvitation.status, "pending"),
+          eq(table.tenantId, tenantContext.tenantId),
+          eq(table.email, normalizedEmail),
+          eq(table.status, "pending"),
         ),
-      )
-      .limit(1);
+    });
 
     if (existingPending) {
       return c.json(

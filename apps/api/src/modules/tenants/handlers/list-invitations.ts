@@ -1,5 +1,4 @@
-import { db, desc, eq } from "@hono-commerce/db";
-import { tenantInvitation } from "@hono-commerce/db/schema/tenant";
+import { db } from "@hono-commerce/db";
 import { tenantParamSchema } from "@hono-commerce/types";
 import { createFactory } from "hono/factory";
 
@@ -15,19 +14,19 @@ export const listInvitationsHandler = factory.createHandlers(
   async (c) => {
     const tenantContext = c.get("tenant");
 
-    const invitations = await db
-      .select({
-        id: tenantInvitation.id,
-        email: tenantInvitation.email,
-        role: tenantInvitation.role,
-        status: tenantInvitation.status,
-        inviterId: tenantInvitation.inviterId,
-        createdAt: tenantInvitation.createdAt,
-        updatedAt: tenantInvitation.updatedAt,
-      })
-      .from(tenantInvitation)
-      .where(eq(tenantInvitation.tenantId, tenantContext.tenantId))
-      .orderBy(desc(tenantInvitation.createdAt));
+    const invitations = await db.query.tenantInvitation.findMany({
+      columns: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+        inviterId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: (table, { eq }) => eq(table.tenantId, tenantContext.tenantId),
+      orderBy: (table, { desc }) => desc(table.createdAt),
+    });
 
     return c.json(
       ok({
