@@ -133,12 +133,32 @@ This document contains mandatory architectural, database, backend API, and event
 
 ## 5. Shared UI Component Architecture (`packages/ui`)
 
+### Route-local frontend ownership
+
+- Next.js route-specific composition MUST live in the nearest private App Router folder (`_components/`, `_hooks/`, or `_lib/`) owned by the page or route group. Components used by sibling routes in one group belong in that group’s private folder.
+- App-wide providers, API clients, query infrastructure, theme infrastructure, and components used by multiple route groups may remain under an app’s `src/components` or `src/lib`.
+- Route-local modules MAY compose `packages/ui` primitives and shared composites. Shared packages MUST NOT import route-local modules. Promote a route-local component to `packages/ui/src/shared/*` only when a real cross-app or cross-feature consumer exists.
+
 `packages/ui` enforces a strict separation between **Atomic Primitives** and **Composite Shared UI Systems**:
 
 ### A. Atomic Primitives (`@hono-commerce/ui/components/*`)
 
 - Pure, unstyled or headless base primitives: `button`, `card`, `dialog`, `drawer`, `dropdown-menu`, `field`, `input`, `input-group`, `popover`, `resizable`, `select`, `sheet`, `sidebar`, `table`, `tabs`, `textarea`, `tooltip`, etc.
 - **Invariant**: Primitives must never contain application-specific business logic or layout coupling.
+
+### C. Frontend Form and Server-State Standard
+
+- Every frontend form in `apps/dashboard`, `apps/storefront`, and shared feature flows MUST use the corresponding shadcn/Base UI primitives from `@hono-commerce/ui` for controls and `Field`/`FieldGroup` for layout and validation messaging.
+- Form field state and submission handling MUST use React Hook Form with `@hookform/resolvers/zod` and a Zod schema authored in `packages/types/src/schemas/*`.
+- Any form that changes server state MUST submit through a typed Hono RPC call wrapped in TanStack Query `useMutation`, with scoped invalidation or refetch after success. View-only controls may use local React state.
+- **URL-addressable view state MUST use `nuqs`**: search text, filters, date ranges, pagination, page size, sorting, route tabs, selected rows/resources, and shareable drawer or split-view state belong in typed URL query parameters rather than component-local state.
+- Each Next.js App Router application MUST mount `NuqsAdapter` once at its root client-provider boundary. Feature modules MUST define typed parser contracts with `parseAsString`, `parseAsInteger`, `parseAsBoolean`, `parseAsStringEnum`, or `parseAsArrayOf`; reuse the same parser definitions in server components through `nuqs/server` `createSearchParamsCache` when server-side parsing is required.
+- URL state MUST feed TanStack Query: normalize parsed values, include them in the query key, and map them to typed Hono RPC query parameters. TanStack Query owns cached server data and request status; `nuqs` owns the URL representation. URL state MUST NOT be duplicated in the query cache or mirrored into a second local-state source.
+- Use `clearOnDefault` for canonical URLs and debounce high-frequency search updates with nuqs URL-update options. Validate and clamp values at the API boundary with shared Zod schemas. Do not manually mutate `URLSearchParams` or use ad-hoc router query strings.
+- Transient interaction state (popover open state, hover, focus, local loading, unsaved React Hook Form drafts, and animation state) MAY remain in React state. Secrets, tokens, and personally identifiable data MUST NOT be placed in the URL.
+- Shared request schemas MUST be reused by backend `zValidator` and frontend `react-hook-form`/`zodResolver`; ad-hoc payload shapes are forbidden.
+- Raw `<input>`, `<select>`, `<textarea>`, `<button>`, and custom control replacements are forbidden when a shared primitive exists. A semantic `<form>` element is allowed as the React Hook Form submission boundary.
+- Form fields MUST expose visible labels, `data-invalid`, `aria-invalid`, disabled state, and `FieldError` feedback according to the app-level frontend instructions.
 
 ### B. Composite Shared UI Systems (`@hono-commerce/ui/shared/*`)
 

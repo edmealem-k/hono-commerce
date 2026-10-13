@@ -20,12 +20,14 @@ export interface DrawerConfig {
   resizeStorageKey?: string;
   naked?: boolean;
   className?: string;
+  onRequestClose?: () => boolean | Promise<boolean>;
 }
 
 interface DrawerState {
   stack: DrawerConfig[];
 }
 
+const EMPTY_DRAWER_STATE: DrawerState = { stack: [] };
 let state: DrawerState = { stack: [] };
 let idCounter = 0;
 const listeners = new Set<() => void>();
@@ -78,7 +80,7 @@ export function useDrawer() {
   const current = useSyncExternalStore(
     drawerStore.subscribe,
     drawerStore.getSnapshot,
-    () => ({ stack: [] }),
+    () => EMPTY_DRAWER_STATE,
   );
   const topDrawer = current.stack[current.stack.length - 1];
 

@@ -1,11 +1,6 @@
 import { Heading, Text } from "@react-email/components";
 
-import {
-  EmailButton,
-  EmailCodeBox,
-  EmailLayout,
-  emailStyles,
-} from "./components";
+import { EmailButton, EmailLayout, emailStyles } from "./components";
 
 import type { MagicLinkEmailProps } from "@hono-commerce/queue";
 
@@ -13,7 +8,6 @@ export type { MagicLinkEmailProps };
 
 export function MagicLinkEmail({
   actionUrl,
-  token,
   expiresInMinutes = 10,
 }: MagicLinkEmailProps) {
   return (
@@ -28,7 +22,6 @@ export function MagicLinkEmail({
         is valid for {expiresInMinutes} minutes and can only be used once.
       </Text>
       <EmailButton href={actionUrl}>Sign In to Hono Commerce</EmailButton>
-      {token ? <EmailCodeBox code={token} /> : null}
     </EmailLayout>
   );
 }

@@ -12,7 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose,
 } from "@hono-commerce/ui/components/sheet";
 import { cn } from "@hono-commerce/ui/lib/utils";
 import { XIcon } from "lucide-react";
@@ -58,6 +57,13 @@ function DrawerItem({
     (side === "left" || side === "right") && (drawer.resizable ?? true);
   const defaultSize = Math.min(90, Math.max(10, drawer.defaultSize ?? 40));
   const spacerSize = 100 - defaultSize;
+  const requestClose = () => {
+    void (async () => {
+      const allowed = await drawer.onRequestClose?.();
+      if (allowed === false) return;
+      onClose();
+    })();
+  };
 
   const drawerBody = (
     <div className="bg-background flex size-full flex-col overflow-hidden">
@@ -78,18 +84,15 @@ function DrawerItem({
               </SheetDescription>
             )}
           </div>
-          <SheetClose
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={onClose}
-              >
-                <XIcon className="size-4" />
-              </Button>
-            }
-          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Close drawer"
+            onClick={requestClose}
+          >
+            <XIcon className="size-4" />
+          </Button>
         </SheetHeader>
       )}
       <div
@@ -104,13 +107,13 @@ function DrawerItem({
   );
 
   return (
-    <Sheet open onOpenChange={(open) => !open && isTop && onClose()}>
+    <Sheet open onOpenChange={(open) => !open && isTop && requestClose()}>
       {canResize ? (
         <SheetContent
           side={side}
           showCloseButton={false}
           className="pointer-events-none fixed inset-0 z-50 h-full w-screen max-w-none border-0 bg-transparent p-0 shadow-none"
-          style={{ zIndex: 50 + index * 5 }}
+          data-drawer-index={index}
         >
           <ResizablePanelGroup className="size-full">
             {side === "right" ? (
@@ -159,21 +162,21 @@ function DrawerItem({
           side={side}
           showCloseButton={false}
           className={cn(
-            "p-0",
+            "w-full p-0 sm:w-auto",
             drawer.size === "sm" && "sm:max-w-sm",
             drawer.size === "md" && "sm:max-w-md",
             drawer.size === "lg" && "sm:max-w-lg",
             drawer.size === "xl" && "sm:max-w-xl",
             drawer.size === "full" && "sm:max-w-none w-screen",
           )}
-          style={{
-            ...(drawer.customSize && (side === "left" || side === "right")
-              ? { width: drawer.customSize, maxWidth: drawer.customSize }
-              : drawer.customSize
-                ? { height: drawer.customSize }
-                : undefined),
-            zIndex: 50 + index * 5,
-          }}
+          data-drawer-index={index}
+          style={
+            drawer.customSize
+              ? side === "left" || side === "right"
+                ? { width: drawer.customSize, maxWidth: drawer.customSize }
+                : { height: drawer.customSize }
+              : undefined
+          }
         >
           {drawerBody}
         </SheetContent>

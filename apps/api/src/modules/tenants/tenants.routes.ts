@@ -5,6 +5,7 @@ import { requirePermission } from "../../lib/auth/require-permission";
 import { requireTenantContext } from "../../lib/auth/require-tenant";
 import { cancelInvitationHandler } from "./handlers/cancel-invitation";
 import { createInvitationHandler } from "./handlers/create-invitation";
+import { getWorkspaceHandler } from "./handlers/get-workspace";
 import { listInvitationsHandler } from "./handlers/list-invitations";
 import { resendInvitationHandler } from "./handlers/resend-invitation";
 
@@ -13,6 +14,11 @@ import type { TenantEnv } from "../../types/auth";
 export const tenantsRouter = new Hono<TenantEnv>()
   .use("*", requireAuth())
   .use("/:tenantId/*", requireTenantContext())
+  .get(
+    "/:tenantId/workspace",
+    requirePermission("TENANT:READ"),
+    ...getWorkspaceHandler,
+  )
   .post(
     "/:tenantId/invitations",
     requirePermission("TEAM:INVITE"),

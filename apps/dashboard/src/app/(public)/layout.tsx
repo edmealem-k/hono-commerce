@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Image from "next/image";
 
 import type { ReactNode } from "react";
 
@@ -8,30 +8,49 @@ export default function PublicAuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-background relative flex min-h-screen flex-col items-center justify-between px-4 py-8 sm:px-6">
-      {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.12),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.08),rgba(0,0,0,0))]" />
-
-      {/* Top Brand Header */}
-      <header className="relative z-10 flex w-full max-w-md justify-center py-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-lg font-bold tracking-tight transition-opacity hover:opacity-90"
-        >
-          <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg font-black shadow-sm">
-            H
+    <div className="bg-background min-h-svh lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <main className="flex min-h-svh flex-col px-4 py-6 sm:px-8 lg:px-16 lg:py-10">
+        <header className="flex items-center">
+          <div className="text-foreground inline-flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <Image
+              src="/brand/hono-commerce-mark.svg"
+              alt="Hono Commerce"
+              width={32}
+              height={32}
+              priority
+              unoptimized
+            />
+            Hono Commerce
           </div>
-          <span className="text-foreground">Hono Commerce</span>
-        </Link>
-      </header>
-
-      {/* Centered Main Content Area */}
-      <main className="relative z-10 my-auto w-full max-w-md">{children}</main>
-
-      {/* Bottom Footer */}
-      <footer className="text-muted-foreground relative z-10 w-full max-w-md py-4 text-center text-xs">
-        &copy; {new Date().getFullYear()} Hono Commerce. All rights reserved.
-      </footer>
+        </header>
+        <div className="flex flex-1 items-center justify-center py-10">
+          <div className="w-full max-w-md">{children}</div>
+        </div>
+        <footer className="text-muted-foreground text-xs">
+          &copy; {new Date().getFullYear()} Hono Commerce
+        </footer>
+      </main>
+      <aside className="bg-muted relative hidden min-h-svh overflow-hidden border-l lg:block">
+        <Image
+          src="/brand/hono-commerce-login-visual.svg"
+          alt="A calm commerce workspace illustration"
+          fill
+          priority
+          unoptimized
+          className="object-cover"
+          sizes="(min-width: 1024px) 55vw, 0vw"
+        />
+        <div className="from-background/90 via-background/20 absolute inset-0 bg-gradient-to-t to-transparent" />
+        <div className="absolute right-12 bottom-12 left-12 max-w-lg">
+          <p className="text-foreground text-3xl font-semibold tracking-tight">
+            One workspace for every store you operate.
+          </p>
+          <p className="text-muted-foreground mt-3 text-sm leading-6">
+            Sign in to choose an authorized workspace and continue managing your
+            commerce operations.
+          </p>
+        </div>
+      </aside>
     </div>
   );
 }

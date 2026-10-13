@@ -5,8 +5,7 @@ import type React from "react";
 export interface PermissionGateSubject {
   id?: string;
   role?: string | null;
-  permissions?: string[];
-  [key: string]: string | number | boolean | null | undefined | string[];
+  permissions?: readonly string[];
 }
 
 export interface PermissionGateProps {
@@ -40,51 +39,16 @@ export interface PermissionGateProps {
   children: React.ReactNode;
 }
 
-const ROLE_PERMISSIONS: Record<string, string[]> = {
-  admin: ["*"],
-  staff: [
-    "PLATFORM:READ",
-    "PLATFORM:SUPPORT",
-    "TENANT:READ",
-    "ORDERS:READ",
-    "AUDIT:READ",
-  ],
-  owner: [
-    "TENANT:MANAGE",
-    "TENANT:BILLING",
-    "TENANT:SETTINGS",
-    "TEAM:MANAGE",
-    "TEAM:INVITE",
-    "CATALOG:MANAGE",
-    "ORDERS:MANAGE",
-    "STORAGE:MANAGE",
-    "STORAGE:UPLOAD",
-    "ANALYTICS:READ",
-  ],
-  member: [
-    "CATALOG:MANAGE",
-    "ORDERS:MANAGE",
-    "STORAGE:UPLOAD",
-    "ANALYTICS:READ",
-  ],
-  customer: ["CUSTOMER:PROFILE", "CUSTOMER:ORDERS"],
-};
-
 /**
- * Forward-compatible permission evaluator for the UI.
- * Matches explicit user permissions or role-based permission grants.
+ * UI permission evaluator. Effective permissions are resolved by the
+ * authenticated session; the UI does not duplicate the server role registry.
  */
 export function checkUiPermission(
   user: PermissionGateSubject | null | undefined,
   permission: string,
   _tenantId?: string,
 ): boolean {
-  if (!user || !user.role) return false;
-
-  // Platform admin has universal access
-  if (user.role === "admin") {
-    return true;
-  }
+  if (!user) return false;
 
   // Explicit subject permissions override
   if (Array.isArray(user.permissions)) {
@@ -96,11 +60,7 @@ export function checkUiPermission(
     }
   }
 
-  // Standard role permission grants
-  const rolePermissions = ROLE_PERMISSIONS[user.role];
-  if (!rolePermissions) return false;
-
-  return rolePermissions.includes("*") || rolePermissions.includes(permission);
+  return false;
 }
 
 /**

@@ -1,0 +1,30 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 96 96"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">Hono Commerce</title>
+  <desc id="description">
+    Two interlocking folded forms create an H-shaped commerce gateway.
+  </desc>
+  <defs>
+    <linearGradient id="left" x1="16" y1="8" x2="58" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3027df" />
+      <stop offset="1" stop-color="#5650ee" />
+    </linearGradient>
+    <linearGradient id="right" x1="80" y1="8" x2="38" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8068f5" />
+      <stop offset="1" stop-color="#5f4ce8" />
+    </linearGradient>
+  </defs>
+  <path
+    fill="url(#left)"
+    d="M16 13c0-4.4 4.8-7.1 8.6-4.9L45 19.8v18.7L58 46c1.5.9 1.5 3.1 0 4l-13 7.5v18.7L24.6 87.9C20.8 90.1 16 87.4 16 83V13Z"
+  />
+  <path
+    fill="url(#right)"
+    d="M80 13c0-4.4-4.8-7.1-8.6-4.9L51 19.8v18.7L38 46c-1.5.9-1.5 3.1 0 4l13 7.5v18.7l20.4 11.7c3.8 2.2 8.6-.5 8.6-4.9V13Z"
+  />
+  <path fill="#241f68" fill-opacity=".24" d="m38 46 10-5.8L58 46c1.5.9 1.5 3.1 0 4l-10 5.8L38 50c-1.5-.9-1.5-3.1 0-4Z" />
+</svg>

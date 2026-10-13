@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@hono-commerce/auth": "workspace:*",
     "@hono-commerce/env": "workspace:*",
     "@hono-commerce/types": "workspace:*",
     "@hono-commerce/ui": "workspace:*",
@@ -24,6 +25,7 @@
     "next": "catalog:",
     "next-themes": "catalog:",
     "nextjs-toploader": "catalog:",
+    "nuqs": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",

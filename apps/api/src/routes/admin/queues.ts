@@ -2,7 +2,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { HonoAdapter } from "@bull-board/hono";
 import { auth } from "@hono-commerce/auth";
-import { env } from "@hono-commerce/env/api";
+import { hasPermission } from "@hono-commerce/auth/permissions";
 import { getEmailQueue } from "@hono-commerce/queue";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
@@ -23,20 +23,15 @@ createBullBoard({
 
 export const queuesRouter = new Hono();
 
-// Auth Guard: In production, require superadmin session. In dev, allow access for debugging.
+// Auth Guard: queue observability always requires an authenticated permission.
 queuesRouter.use("/*", async (c, next) => {
-  if (env.NODE_ENV === "development") {
-    return next();
-  }
-
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!session) {
     return c.text("Unauthorized: Admin session required", 401);
   }
 
-  const userRole = (session.user as { role?: string }).role;
-  if (userRole !== "admin") {
-    return c.text("Forbidden: Superadmin access required", 403);
+  if (!hasPermission(session.user, "QUEUES:READ")) {
+    return c.text("Forbidden: Queue observability permission required", 403);
   }
 
   return next();

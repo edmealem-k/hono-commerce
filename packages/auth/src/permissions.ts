@@ -13,6 +13,8 @@ export type PlatformRole = Extract<DbUserRole, "admin" | "staff">;
 export type MerchantRole = TenantMemberRole;
 export type UserRole = DbUserRole | MerchantRole | "guest";
 
+export type { Permission } from "@hono-commerce/types";
+
 export interface AuthorizationSubject {
   id?: string;
   role?: string | null;
@@ -25,37 +27,53 @@ export interface PermissionCheckOptions {
   resourceId?: string;
 }
 
-export const ROLE_PERMISSIONS: Record<string, string[]> = {
+export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   admin: ["*"], // Wildcard: platform superadmin has full access
   staff: [
     "PLATFORM:READ",
     "PLATFORM:SUPPORT",
+    "MODERATION:READ",
+    "QUEUES:READ",
     "TENANT:READ",
     "ORDERS:READ",
     "AUDIT:READ",
   ],
   owner: [
+    "TENANT:READ",
+    "TENANT:UPDATE",
     "TENANT:MANAGE",
     "TENANT:BILLING",
     "TENANT:SETTINGS",
+    "MEMBERS:MANAGE",
     "TEAM:MANAGE",
     "TEAM:INVITE",
+    "CATALOG:WRITE",
     "CATALOG:MANAGE",
     "ORDERS:MANAGE",
-    "STORAGE:MANAGE",
     "STORAGE:READ",
+    "STORAGE:MANAGE",
     "STORAGE:UPLOAD",
     "ANALYTICS:READ",
   ],
   member: [
+    "TENANT:READ",
+    "CATALOG:READ",
+    "CATALOG:WRITE",
     "CATALOG:MANAGE",
+    "ORDERS:READ",
     "ORDERS:MANAGE",
-    "STORAGE:UPLOAD",
     "STORAGE:READ",
+    "STORAGE:UPLOAD",
     "ANALYTICS:READ",
   ],
-  customer: ["CUSTOMER:PROFILE", "CUSTOMER:ORDERS"],
+  customer: ["CUSTOMERS:READ", "ORDERS:READ"],
 };
+
+export function getPermissionsForRole(
+  role: string | null | undefined,
+): string[] {
+  return [...(ROLE_PERMISSIONS[role ?? ""] ?? [])];
+}
 
 /**
  * Role & permission evaluator.
@@ -69,11 +87,7 @@ export function hasPermission(
   if (!user || !user.role) return false;
 
   // 1. Platform superadmin has universal access
-  if (user.role === "admin") {
-    return true;
-  }
-
-  // 2. Explicit subject permissions override
+  // Explicit subject permissions are resolved at the session boundary.
   if (Array.isArray(user.permissions)) {
     if (
       user.permissions.includes("*") ||
@@ -83,7 +97,8 @@ export function hasPermission(
     }
   }
 
-  // 3. Standard role permission grants
+  // Role grants remain available to server-side callers without a session
+  // permission projection.
   const rolePermissions = ROLE_PERMISSIONS[user.role];
   if (!rolePermissions) return false;
 

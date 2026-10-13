@@ -1,91 +1,56 @@
-import { ModeToggle } from "@/components/mode-toggle";
-import { routes } from "@/lib/routes";
+import { createServerApi } from "@/lib/api-server";
 import { Button } from "@hono-commerce/ui/components/button";
 import {
-  Building2,
-  ShieldAlert,
-  Headphones,
-  Activity,
-  ChevronLeft,
-} from "lucide-react";
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@hono-commerce/ui/components/empty";
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function AdminDashboardLayout({
+import { AdminWorkspaceShell } from "./_components/admin-workspace-shell";
+
+export default async function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="bg-background flex min-h-screen">
-      {/* Superadmin Sidebar */}
-      <aside className="border-border bg-card/50 flex w-64 flex-col justify-between border-r p-4">
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-2">
-            <div className="bg-destructive text-destructive-foreground flex size-8 items-center justify-center rounded-lg font-bold">
-              A
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Superadmin</div>
-              <div className="text-muted-foreground text-xs">
-                admin.localhost:3002
-              </div>
-            </div>
-          </div>
+  const api = await createServerApi();
+  const response = await api.users.me.workspaces.$get();
+  const responseStatus: number = response.status;
 
-          <nav className="space-y-1">
-            <Link
-              href={routes.admin.tenants}
-              className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-            >
-              <Building2 className="text-muted-foreground size-4" />
-              Tenants & Subscriptions
-            </Link>
-            <Link
-              href={routes.admin.moderation}
-              className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-            >
-              <ShieldAlert className="text-muted-foreground size-4" />
-              Review Moderation
-            </Link>
-            <Link
-              href={routes.admin.platformChat}
-              className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-            >
-              <Headphones className="text-muted-foreground size-4" />
-              Escalation Support
-            </Link>
-            <Link
-              href={routes.admin.queues}
-              className="hover:bg-muted flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-            >
-              <Activity className="text-muted-foreground size-4" />
-              Background Queues
-            </Link>
-          </nav>
-        </div>
+  if (responseStatus === 401) {
+    redirect("/sign-in?callbackUrl=/");
+  }
 
-        <div className="border-border space-y-4 border-t pt-4">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-muted-foreground text-xs">Appearance</span>
-            <ModeToggle />
-          </div>
-          <Link href="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2"
-            >
-              <ChevronLeft className="size-4" />
-              Portal Selector
-            </Button>
-          </Link>
-        </div>
-      </aside>
+  if (!response.ok) {
+    throw new Error("Unable to authorize the platform workspace");
+  }
 
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-y-auto">
-        <div className="flex-1 p-8">{children}</div>
-      </main>
-    </div>
-  );
+  const responseBody = await response.json();
+  if (!responseBody.data) {
+    throw new Error("Platform authorization response did not include data");
+  }
+  const canAccessPlatform = responseBody.data.platform.canAccess;
+  if (!canAccessPlatform) {
+    return (
+      <Empty className="min-h-svh">
+        <EmptyHeader>
+          <ShieldCheck className="text-muted-foreground size-6" />
+          <EmptyTitle>Platform access required</EmptyTitle>
+          <EmptyDescription>
+            Your account does not have permission to open the platform
+            workspace.
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button nativeButton={false} render={<Link href="/" />}>
+          Return to workspaces
+        </Button>
+      </Empty>
+    );
+  }
+
+  return <AdminWorkspaceShell>{children}</AdminWorkspaceShell>;
 }

@@ -16,6 +16,9 @@ This document contains mandatory rules for frontend development, component compo
 ## 1. UI & Component Architecture (Base UI + Shadcn)
 
 - **Component Source**: Always import atomic primitives from `@hono-commerce/ui/components/...` and composite systems from `@hono-commerce/ui/shared/...`. Do not write local one-off duplicates in `apps/dashboard/src/components/ui`. If a needed component is missing, add it to `packages/ui` first.
+- **Colocated feature ownership**: Keep route-specific composition close to the route that owns it. Use private `_components/`, `_hooks/`, and `_lib/` folders inside the nearest App Router segment for code consumed only by that page or route group. Keep app-wide providers, theme infrastructure, API clients, query infrastructure, and components shared by multiple route groups under `src/components` or `src/lib`.
+- **Nearest shared boundary**: If a component is used by sibling routes in one route group, place it in that group’s private folder (for example, `app/(public)/_components`). If it is used by one page/layout only, place it under that page’s private folder (for example, `app/(tenant)/[slug]/_components`). Promote code to `packages/ui/src/shared/*` only after a real cross-app or cross-feature consumer exists.
+- **Import ownership**: Prefer relative imports for colocated private modules and `@/components`/`@/lib` only for app-wide modules. Route-local modules may compose shared UI, but shared UI must never import route-local code.
 - **Base UI Primitives (Not Radix `asChild`)**: This workspace uses `@base-ui/react`. When a component supports composition (e.g. `<DropdownMenuTrigger render={<Button ... />} />`), use the `render` prop. Do not assume Radix `asChild`.
 - **Zero Raw HTML Inputs/Buttons Policy**:
   - `<Button>` instead of `<button>`
@@ -84,6 +87,9 @@ This document contains mandatory rules for frontend development, component compo
 - **Frontend RPC Client**: Always use `apiClient` from `@/lib/api-client` (`hc<AppType>`). Never make un-typed ad-hoc `fetch("/api/...")` requests.
 - **Response Type Inference (ADR-005)**: Infer query and mutation response types directly via `InferResponseType<typeof apiClient.api.v1.[domain].$get, 200>` from `hono/client`. Do NOT create redundant hand-written response DTOs.
 - **Client-Side Queries & Mutations**: Wrap API calls in TanStack Query (`useQuery`, `useMutation`) using `getQueryClient()` from `@/lib/query-client`.
+- **URL State & Query Keys**: Use `nuqs` for URL-addressable state such as filters, search, sorting, pagination, page size, tabs, selected resources, and shareable drawer/split-view state. The root `Providers` mounts `NuqsAdapter`; feature code uses typed nuqs parsers rather than `useState` or manual `URLSearchParams` mutation.
+- **TanStack Query Integration**: Normalize the parsed URL values, include the complete filter object in the `queryKey`, and pass the same values to the typed Hono RPC query. Keep server data and loading/error state in TanStack Query; do not mirror it into URL state. Use `clearOnDefault` for canonical URLs and debounce high-frequency search updates.
+- **Server Parsing**: When a route needs server-side filtering or prefetching, define a shared parser contract and consume it with `nuqs/server` `createSearchParamsCache`; the API's shared Zod schema remains authoritative for validation and bounds.
 - **Number & Currency Formatting**: Always apply `tabular-nums` class to prices, metrics, dates, and live numbers (e.g. `<span className="tabular-nums">$15,231.89</span>`) to prevent horizontal layout shift.
 
 ---

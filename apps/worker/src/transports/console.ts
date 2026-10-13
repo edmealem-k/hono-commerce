@@ -1,33 +1,20 @@
 import type { EmailJobData } from "@hono-commerce/queue";
 
-export interface ConsoleEmailPayload {
-  to: string;
-  subject: string;
-  template: string;
-  props: EmailJobData["props"];
+export type ConsoleEmailPayload = EmailJobData & {
   text?: string;
-}
+};
 
-export function logEmailToConsole({
-  to,
-  subject,
-  template,
-  props,
-}: ConsoleEmailPayload) {
-  const p = props as {
-    actionUrl?: string;
-    token?: string;
-  };
-
-  const actionUrl = p.actionUrl;
-  const token = p.token;
+export function logEmailToConsole(payload: ConsoleEmailPayload) {
+  const actionUrl = payload.props.actionUrl;
+  const token =
+    payload.template === "magic-link" ? payload.props.token : undefined;
 
   console.log("\n" + "═".repeat(64));
   console.log(" ✉️  [LOCAL WORKER] Transactional Email Dispatched");
   console.log("─".repeat(64));
-  console.log(` To:       ${to}`);
-  console.log(` Subject:  ${subject}`);
-  console.log(` Template: ${template}`);
+  console.log(` To:       ${payload.to}`);
+  console.log(` Subject:  ${payload.subject}`);
+  console.log(` Template: ${payload.template}`);
   if (token) {
     console.log(` Code:     ${token}`);
   }

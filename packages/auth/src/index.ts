@@ -2,22 +2,31 @@ import { createDb } from "@hono-commerce/db";
 import * as authSchema from "@hono-commerce/db/schema/auth";
 import { env } from "@hono-commerce/env/api";
 import { enqueueEmail } from "@hono-commerce/queue";
-import { betterAuth } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, magicLink } from "better-auth/plugins";
+import { admin, customSession, magicLink } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
+
+import { createAuthOriginPolicy } from "./origins";
+import { getPermissionsForRole } from "./permissions";
+
+export const authOriginPolicy = createAuthOriginPolicy({
+  corsOrigins: env.CORS_ORIGIN,
+  dashboardUrl: env.DASHBOARD_URL,
+});
 
 export function createAuth() {
   const db = createDb();
+  const isProduction = env.NODE_ENV === "production";
 
-  return betterAuth({
+  const options = {
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
         ...authSchema,
       },
     }),
-    trustedOrigins: env.CORS_ORIGIN.split(",").map((o) => o.trim()),
+    trustedOrigins: authOriginPolicy.trustedOrigins,
     emailAndPassword: {
       enabled: false,
     },
@@ -26,29 +35,38 @@ export function createAuth() {
         status: {
           type: "string",
           defaultValue: "active",
+          input: false,
         },
       },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    basePath: "/api/v1/auth",
     advanced: {
-      generateId: () => crypto.randomUUID(),
+      database: {
+        generateId: "uuid",
+      },
+      crossSubDomainCookies: {
+        enabled: true,
+        domain:
+          env.BETTER_AUTH_COOKIE_DOMAIN ?? new URL(env.DASHBOARD_URL).hostname,
+      },
       defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
+        sameSite: "lax",
+        secure: isProduction,
         httpOnly: true,
       },
     },
     plugins: [
       magicLink({
-        sendMagicLink: async ({ email, token, url }) => {
+        expiresIn: 15 * 60,
+        sendMagicLink: async ({ email, url }) => {
           await enqueueEmail({
             to: email,
             subject: "Your sign-in link for Hono Commerce",
             template: "magic-link",
             props: {
               actionUrl: url,
-              token,
               expiresInMinutes: 15,
             },
           });
@@ -64,9 +82,29 @@ export function createAuth() {
         },
       }),
     ],
+  } satisfies BetterAuthOptions;
+
+  return betterAuth({
+    ...options,
+    plugins: [
+      ...options.plugins,
+      customSession(async ({ user, session }) => {
+        return {
+          user: {
+            ...user,
+            role: user.role ?? "customer",
+            status: user.status ?? "active",
+            banned: user.banned ?? false,
+            permissions: getPermissionsForRole(user.role),
+          },
+          session,
+        };
+      }, options),
+    ],
   });
 }
 
 export const auth = createAuth();
 export * from "./jwt";
+export * from "./origins";
 export * from "./permissions";
